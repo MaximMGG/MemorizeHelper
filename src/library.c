@@ -3,8 +3,6 @@
 #include <time.h>
 #include <stdlib.h>
 
-
-
 void lib_add_word(lib *l, str _w, str _t, bool write, bool trans, f32 level) {
     word *w = make(word);
     u32 _w_len = strlen(_w);
@@ -26,7 +24,6 @@ void lib_remove_word(lib *l, str _w) {
             //TODO(maxim) show error message
         }
     }
-
 }
 
 void lib_change_translation(lib *l, str _w, str _t) {
