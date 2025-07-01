@@ -2,6 +2,7 @@
 *.d
 
 memorize
+config_example.txt
 
 # Object files
 *.o
