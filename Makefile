@@ -10,7 +10,6 @@ SRC = $(wildcard $(SRC_DIR)/*.c)
 
 OBJ = $(SRC:*.c=$(OBJ_DIR)/*.o)
 
-
 .PHONY = build clean run
 
 
@@ -20,7 +19,7 @@ run:
 	./$(NAME)
 
 build: $(OBJ)
-	$(CC) -o $(NAME) $^ $(FALGS) $(LIBS)
+	$(CC) -o $(NAME) $^ $(FALGS) $(LIBS) -g
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	$(CC) -c $< -o $@ $(FALGS) $(LIBS)
