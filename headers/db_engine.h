@@ -1,0 +1,23 @@
+#ifndef MEMORIZE_DB_ENGINE_H
+#define MEMORIZE_DB_ENGINE_H
+#include <cstdext/core.h>
+#include <libpq-fe.h>
+
+typedef struct {
+  str user_name;
+  str user_password;
+  str db_name;
+  PGconn *conn;
+  PGresult *res;
+
+} MDatabase;
+
+typedef str * MDatabaseResult;
+
+MDatabase *databaseConnect(str user_name, str user_password, str db_name);
+bool databaseDisconnect(MDatabase *db);
+bool databaseInsertQuery(MDatabase *db, str query);
+MDatabaseResult databaseSelectQuery(MDatabase *db, str query);
+bool databaseUpdateQuery(MDatabase *db, str query);
+
+#endif //MEMORIZE_DB_ENGINE_H
