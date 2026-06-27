@@ -12,12 +12,17 @@ typedef struct {
 
 } MDatabase;
 
-typedef str * MDatabaseResult;
+typedef struct {
+  i32 rows;
+  i32 cols;
+  str **data;
+} MDatabaseResult;
 
-MDatabase *databaseConnect(str user_name, str user_password, str db_name);
-bool databaseDisconnect(MDatabase *db);
-bool databaseInsertQuery(MDatabase *db, str query);
-MDatabaseResult databaseSelectQuery(MDatabase *db, str query);
-bool databaseUpdateQuery(MDatabase *db, str query);
+MDatabase *        databaseConnect    (str user_name, str user_password, str db_name);
+bool               databaseDisconnect (MDatabase *db);
+bool               databaseInsertQuery(MDatabase *db, str query);
+MDatabaseResult *  databaseSelectQuery(MDatabase *db, str query);
+bool               databaseUpdateQuery(MDatabase *db, str query);
+void               databaseClearResult(MDatabaseResult *res);
 
 #endif //MEMORIZE_DB_ENGINE_H
