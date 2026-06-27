@@ -2,7 +2,7 @@
 #include "../headers/error.h"
 #include <libpq-fe.h>
 
-#define MDB_CONNECT_QUERY "dbname=%s user=%s passwrod=%s"
+#define MDB_CONNECT_QUERY "dbname=%s user=%s password=%s"
 #define MDB_CHECK_TABLE_EXISTS "SELECT COUNT(*) FROM pg_tables WHERE schemaname='public' AND tablename = '%s';"
 #define MDB_SELECT_QUERY ""
 #define MDB_INSERT_QUERY ""

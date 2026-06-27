@@ -1,0 +1,6 @@
+{
+    "dir":"./test",
+    "test_case": [
+      ["db_engine_test.c", "src/db_engine.c", "src/error.c", "-lcext", "-lpq"]
+    ]
+}
