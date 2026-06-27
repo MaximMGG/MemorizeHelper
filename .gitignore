@@ -1,5 +1,6 @@
 # Prerequisites
 *.d
+test/.test_pass
 
 memorize
 config_example.txt

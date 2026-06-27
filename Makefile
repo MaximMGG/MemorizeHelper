@@ -1,7 +1,7 @@
 NAME = memorize
 CC = gcc
 GLAGS = -Wall
-LIBS = -lcext
+LIBS = -lcext -lpq
 
 SRC_DIR = ./src
 OBJ_DIR = ./obj
@@ -23,7 +23,6 @@ build: $(OBJ)
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	$(CC) -c $< -o $@ $(FALGS) $(LIBS)
-	
 
 clear:
 	rm $(NAME) $(OBJ_DIR)/*.o

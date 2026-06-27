@@ -1,0 +1,12 @@
+#ifndef MEMORIZE_DATABASE_H
+#define MEMORIZE_DATABASE_H
+#include "db_engine.h"
+
+void dbConnect(str user_name, str user_password, str db_name);
+void dbDisconnect();
+void dbInsertPair(str word, str tranlation);
+void dbRemovePair(str word);
+void dbAddTranslation(str word, str tranlation);
+
+
+#endif //MEMORIZE_DATABASE_H

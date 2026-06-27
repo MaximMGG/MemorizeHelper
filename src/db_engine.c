@@ -65,6 +65,7 @@ MDatabaseResult *databaseSelectQuery(MDatabase *db, str query) {
       result->data[i][j] = strCopy(PQgetvalue(db->res, i, j));
     }
   }
+  PQclear(db->res);
   
   return result;
 }
