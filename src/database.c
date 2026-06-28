@@ -9,6 +9,8 @@ MDatabase *db = null;
 #define DB_SELECT_LIB_ID      "SELECT library_id FROM libs where library_name = '%s';"
 #define DB_SELECT_LIB_CONTENT "SELECT word, translation FROM words where library_id=%d;"
 #define DB_INSERT_NEW_LIB     "INSET INTO libs (library_name) VALUES ('%s');"
+#define DB_DELETE_WORD        "DELETE * FROM words WHERE word='%s' AND library_id=%d;"
+#define DB_DELETE_LIBRARY     "DELETE library_id, library_name FROM libs WHERE library_name='%s';"
 
 void dbConnect(str user_name, str user_password, str db_name) {
   db = databaseConnect(user_name, user_password, db_name);
@@ -28,7 +30,7 @@ void dbDisconnect() {
 
 u32 dbGetLibId(str lib_name) {
   str query = strCreateFmt(DB_SELECT_LIB_ID, lib_name);
-  MDatabaseResult *res = databaseSelectQuery(db, query);
+  MDatabaseResult *res = databaseExecQueryWithResult(db, query);
   if (res->cols < 0) {
     mErrorSetError("MEMORIZE: library %s does not exists\n", lib_name);
     return 0;
@@ -43,7 +45,7 @@ u32 dbGetLibId(str lib_name) {
 void dbInsertPair(str lib_name, str word, str translation) {
   u32 lib_id = dbGetLibId(lib_name);
   str query = strCreateFmt(DB_INSERT_QUERY, lib_id, word, translation);
-  if (!databaseInsertQuery(db, query)) {
+  if (!databaseExecQuryWithoutResult(db, query)) {
     log(FATAL, mErrorGetError());
     exit(EXIT_FAILURE);
   }
@@ -51,14 +53,19 @@ void dbInsertPair(str lib_name, str word, str translation) {
   DEALLOC(query);
 }
 
-void dbRemovePair(str word) {
- //TODO(Check remove thyntacs) 
+void dbDeletePair(str library_name, str word) {
+  u32 lib_id = dbGetLibId(library_name);
+  str query = strCreateFmt(DB_DELETE_WORD, word, lib_id);
+  if (!databaseExecQuryWithoutResult(db, query)) {
+    log(FATAL, mErrorGetError());
+    exit(EXIT_FAILURE);
+  }
 }
 
 Map *dbLoadLibrary(str lib_name) {
   u32 lib_id = dbGetLibId(lib_name);
   str query = strCreateFmt("SELECT (word, translation) FROM words where library_id=%d;", lib_id);
-  MDatabaseResult *res = databaseSelectQuery(db, query);
+  MDatabaseResult *res = databaseExecQueryWithResult(db, query);
 
   if (res == null) {
     log(FATAL, mErrorGetError());
@@ -76,12 +83,16 @@ Map *dbLoadLibrary(str lib_name) {
 
 void dbCreateLibrary(str lib_name) {
   str query = strCreateFmt(DB_INSERT_NEW_LIB, lib_name);
-  if (!databaseInsertQuery(db, query)) {
+  if (!databaseExecQuryWithoutResult(db, query)) {
     log(FATAL, mErrorGetError());
     exit(EXIT_FAILURE);
   }
 }
 
-void dbRemoveLibrary(str name){
-  
+void dbDeleteLibrary(str name){
+  str query = strCreateFmt(DB_DELETE_LIBRARY, name);
+  if (!databaseExecQuryWithoutResult(db, query)) {
+    log(FATAL, mErrorGetError());
+    exit(EXIT_FAILURE);
+  }
 }

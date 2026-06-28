@@ -35,7 +35,7 @@ bool databaseDisconnect(MDatabase *db) {
   return false;
 }
 
-bool databaseInsertQuery(MDatabase *db, str query) {
+bool databaseExecQuryWithoutResult(MDatabase *db, str query) {
   db->res = PQexec(db->conn, query);
   if (PQresultStatus(db->res) != PGRES_COMMAND_OK) {
     PQclear(db->res);
@@ -46,7 +46,7 @@ bool databaseInsertQuery(MDatabase *db, str query) {
   return false;
 }
 
-MDatabaseResult *databaseSelectQuery(MDatabase *db, str query) {
+MDatabaseResult *databaseExecQueryWithResult(MDatabase *db, str query) {
   db->res = PQexec(db->conn, query);
   if (PQresultStatus(db->res) != PGRES_TUPLES_OK) {
     PQclear(db->res);
