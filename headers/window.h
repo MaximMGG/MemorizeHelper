@@ -9,6 +9,7 @@ typedef struct {
   MLibrary *cur;
   u32 x, y;
   str user_input;
+  bool saved;
 } MWindow;
 
 MWindow *mWindowInit();

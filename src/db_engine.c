@@ -3,17 +3,13 @@
 #include <libpq-fe.h>
 
 #define MDB_CONNECT_QUERY "dbname=%s user=%s password=%s"
-#define MDB_CHECK_TABLE_EXISTS "SELECT COUNT(*) FROM pg_tables WHERE schemaname='public' AND tablename = '%s';"
-#define MDB_SELECT_QUERY ""
-#define MDB_INSERT_QUERY ""
-#define MDB_UPDATE_QUERY ""
 
 MDatabase *databaseConnect(str user_name, str user_password, str db_name) {
   MDatabase *db = make(MDatabase);
   str connect_str = strCreateFmt(MDB_CONNECT_QUERY, db_name, user_name, user_password);
   db->conn = PQconnectdb(connect_str);
   if (PQstatus(db->conn) != CONNECTION_OK) {
-    mErrorSetError("MEMORIZE: PQconnectdb with conn_string %s failed\n", connect_str);
+    mErrorSetError("MEMORIZE: PQconnectdb with conn_string %s failed: %s\n", connect_str, PQerrorMessage(db->conn));
     DEALLOC(db);
     DEALLOC(connect_str);
     return null;
@@ -39,7 +35,7 @@ bool databaseExecQuryWithoutResult(MDatabase *db, str query) {
   db->res = PQexec(db->conn, query);
   if (PQresultStatus(db->res) != PGRES_COMMAND_OK) {
     PQclear(db->res);
-    mErrorSetError("MEMORIZE: PQexec whith query: %s failed\n", query);
+    mErrorSetError("MEMORIZE: PQexec whith query: %s failed: %s\n", query, PQerrorMessage(db->conn));
     return false;
   }
   PQclear(db->res);
@@ -50,7 +46,7 @@ MDatabaseResult *databaseExecQueryWithResult(MDatabase *db, str query) {
   db->res = PQexec(db->conn, query);
   if (PQresultStatus(db->res) != PGRES_TUPLES_OK) {
     PQclear(db->res);
-    mErrorSetError("MEMORIZE: PQexec whith query: %s failed\n", query);
+    mErrorSetError("MEMORIZE: PQexec whith query: %s failed: %s\n", query, PQerrorMessage(db->conn));
     return false;
   }
   

@@ -5,6 +5,7 @@ MLibrary *mLibraryCreate     (str lib_name) {
   lib->name = strCopy(lib_name);
   lib->loaded = false;
   lib->content = null;
+  lib->saved = true;
   dbCreateLibrary(lib_name);
   return lib;
 }
@@ -16,15 +17,34 @@ bool mLibraryLoad(MLibrary *lib) {
 
 void mLibraryDestroy(MLibrary *lib) {
   if (lib->content != null) {
-    mapDestroy(lib->content);
+    for(i32 i = 0; i < DA_LEN(lib->content); i++) {
+      mPairDestroy(lib->content[i]);
+    }
+    daDestroy(lib->content);
   }
   DEALLOC(lib->name);
   DEALLOC(lib);
 }
 
+bool mLibrarySave(MLibrary *lib) {
+  for(i32 i = 0; i < DA_LEN(lib->content); i++) {
+    if (lib->content[i]->new_pair) {
+      dbInsertPair(lib->name, lib->content[i]->word, lib->content[i]->translation, lib->content[i]->learning_curve);
+      lib->content[i]->saved = true;
+      lib->content[i]->new_pair = false;
+    } else {
+      if (lib->content[i]->saved == false) {
+	
+      }
+    }
+  }
+
+  return true;
+}
+
 
 bool mLibraryAddPair(MLibrary *lib, str word, str translation) {
-  dbInsertPair(lib->name, word, translation);
+  dbInsertPair(lib->name, word, translation, 0.0);
   return true;
 }
 

@@ -5,13 +5,21 @@
 
 MDatabase *db = null;
 
-#define DB_INSERT_QUERY       "INSERT INTO words (library_id, word, tranlation) VALUES(%d, '%s', '%s');"
-#define DB_SELECT_LIB_ID      "SELECT library_id FROM libs where library_name = '%s';"
-#define DB_SELECT_LIB_CONTENT "SELECT word, translation FROM words where library_id=%d;"
-#define DB_INSERT_NEW_LIB     "INSET INTO libs (library_name) VALUES ('%s');"
-#define DB_DELETE_WORD        "DELETE * FROM words WHERE word='%s' AND library_id=%d;"
-#define DB_DELETE_LIBRARY     "DELETE library_id, library_name FROM libs WHERE library_name='%s';"
+#define DB_CHECK_LIBS_EXISTS     "SELECT * FROM pg_tables WHERE schemaname='public' AND tablename='libs';"
+#define DB_CHECK_WORDS_EXISTS    "SELECT * FROM pg_tables WHERE schemaname='public' AND tablename='words';"
+#define DB_CREATE_LIBS_TABLE     "CREATE TABLE libs (library_id SERIAL, library_name VARCHAR(64) NOT NULL);"
+#define DB_CREATE_WORDS_TABLE    "CREATE TABLE words (pair_id SERIAL, library_id BIGINT, word VARCHAR(64), translation VARCHAR(128), learning_curve FLOAT);"
+
+
+
+#define DB_INSERT_PAIR_QUERY     "INSERT INTO words (library_id, word, tranlation, learning_curve) VALUES(%d, '%s', '%s', %f);"
+#define DB_SELECT_LIB_ID         "SELECT library_id FROM libs where library_name='%s';"
+#define DB_SELECT_LIB_CONTENT    "SELECT pair_id, word, translation, learning_curve FROM words where library_id=%d;"
+#define DB_INSERT_NEW_LIB        "INSERT INTO libs (library_name) VALUES ('%s');"
+#define DB_DELETE_WORD           "DELETE FROM words WHERE word='%s' AND library_id=%d;"
+#define DB_DELETE_LIBRARY        "DELETE FROM libs WHERE library_name='%s';"
 #define DB_SELECT_LIBRARIES_NAME "SELECT library_name FROM libs;"
+#define DB_UPDATE_PAIR           "UPDATE words SET word='%s', translation='%s', learning_curve=%f WHERE pair_id=%lu;"
 
 bool dbConnect(str user_name, str user_password, str db_name) {
   db = databaseConnect(user_name, user_password, db_name);
@@ -45,9 +53,9 @@ i32 dbGetLibId(str lib_name) {
   return id;
 }
 
-bool dbInsertPair(str lib_name, str word, str translation) {
+bool dbInsertPair(str lib_name, str word, str translation, f32 learning_curve) {
   i32 lib_id = dbGetLibId(lib_name);
-  str query = strCreateFmt(DB_INSERT_QUERY, lib_id, word, translation);
+  str query = strCreateFmt(DB_INSERT_PAIR_QUERY, lib_id, word, translation, learning_curve);
   if (!databaseExecQuryWithoutResult(db, query)) {
     log(ERROR, mErrorGetError());
     return false;
@@ -66,9 +74,9 @@ bool dbDeletePair(str library_name, str word) {
   return true;
 }
 
-Map *dbLoadLibrary(str lib_name) {
+Pair **dbLoadLibrary(str lib_name) {
   i32 lib_id = dbGetLibId(lib_name);
-  str query = strCreateFmt("SELECT (word, translation) FROM words where library_id=%d;", lib_id);
+  str query = strCreateFmt(DB_SELECT_LIB_CONTENT, lib_id);
   MDatabaseResult *res = databaseExecQueryWithResult(db, query);
 
   if (res == null) {
@@ -76,13 +84,14 @@ Map *dbLoadLibrary(str lib_name) {
     exit(EXIT_FAILURE);
   }
 
-  Map *m = mapCreate(POINTER(str), POINTER(str), null, MAP_EQL_STR_FUNC);
+  Pair **p = daCreate(Pair *);
+  
   for(i32 i = 0; i < res->rows; i++) {
-    mapInsert(m, strCopy(res->data[i][0]), strCopy(res->data[i][1]));
+    daAppend(p, mPairCreate((u64)atol(res->data[i][0]), res->data[i][1], res->data[i][2], atof(res->data[i][3]), false, false));
   }
 
   databaseClearResult(res);
-  return m;
+  return p;
 }
 
 bool dbCreateLibrary(str lib_name) {
@@ -123,4 +132,18 @@ str *dbGetLibrariesList() {
   }
   databaseClearResult(res);
   return libs;
+}
+
+bool dbUpdatePair(str lib_name, u64 pair_id, str word, str translation, f32 learning_curve) {
+  u32 lib_id = dbGetLibId(lib_name);
+  str query = strCreateFmt(DB_UPDATE_PAIR, pair_id, word, translation, learning_curve);
+  if (!databaseExecQuryWithoutResult(db, query)) {
+    log(ERROR, mErrorGetError());
+    return false;
+  }
+  return true;
+}
+
+bool dbCheckExistsTables() {
+  
 }
