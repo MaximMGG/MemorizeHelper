@@ -1,7 +1,7 @@
 NAME = memorize
 CC = gcc
 GLAGS = -Wall
-LIBS = -lcext -lpq
+LIBS = -lcext -lpq -lcurses
 
 SRC_DIR = ./src
 OBJ_DIR = ./obj
@@ -11,7 +11,6 @@ SRC = $(wildcard $(SRC_DIR)/*.c)
 OBJ = $(SRC:*.c=$(OBJ_DIR)/*.o)
 
 .PHONY = build clean run
-
 
 default: build run
 

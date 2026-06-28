@@ -3,12 +3,13 @@
 #include "db_engine.h"
 #include <cstdext/container/map.h>
 
-void dbConnect(str user_name, str user_password, str db_name);
-void dbDisconnect();
-void dbInsertPair(str lib_name, str word, str tranlation);
-void dbDeletePair(str lib_name, str word);
+bool dbConnect(str user_name, str user_password, str db_name);
+bool dbDisconnect();
+bool dbInsertPair(str lib_name, str word, str tranlation);
+bool dbDeletePair(str lib_name, str word);
 Map *dbLoadLibrary(str name);
-void dbCreateLibrary(str name);
-void dbDeleteLibrary(str name);
+bool dbCreateLibrary(str name);
+bool dbDeleteLibrary(str name);
+str *dbGetLibrariesList();
 
 #endif //MEMORIZE_DATABASE_H
