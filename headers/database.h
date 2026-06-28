@@ -6,9 +6,9 @@
 void dbConnect(str user_name, str user_password, str db_name);
 void dbDisconnect();
 void dbInsertPair(str lib_name, str word, str tranlation);
-void dbRemovePair(str word);
+void dbDeletePair(str lib_name, str word);
 Map *dbLoadLibrary(str name);
 void dbCreateLibrary(str name);
-void dbRemoveLibrary(str name);
+void dbDeleteLibrary(str name);
 
 #endif //MEMORIZE_DATABASE_H
