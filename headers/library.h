@@ -14,11 +14,13 @@ typedef struct {
   bool saved;
 } MLibrary;
 
-MLibrary *mLibraryCreate     (str lib_name);
-bool      mLibraryLoad       (MLibrary *lib);
-void      mLibraryDestroy    (MLibrary *lib);
-bool      mLibraryAddPair    (MLibrary *lib, str word, str translation);
-bool      mLibrarySave       (MLibrary *lib);
-bool      mLIbraryRemovePair (MLibrary *lib, str word);
+MLibrary *mLibraryCreate             (str lib_name);
+bool      mLibraryLoad               (MLibrary *lib);
+void      mLibraryDestroy            (MLibrary *lib);
+bool      mLibraryAddPair            (MLibrary *lib, str word, str translation);
+bool      mLibrarySave               (MLibrary *lib);
+bool      mLibraryRemovePair         (MLibrary *lib, str word);
+bool      mLibraryChangeTranslation  (MLibrary *lib, u32 word_index, str new_translation);
+bool      mLibraryChangeWord         (MLibrary *lib, u32 word_index, str new_word);
 
 #endif//MEMORIZE_LIBRARY_H

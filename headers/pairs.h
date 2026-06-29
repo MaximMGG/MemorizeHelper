@@ -2,16 +2,24 @@
 #define MEMORIZE_PAIR_H
 #include <cstdext/core.h>
 
+#define PAIR_STATE_NEW      (0x01)
+#define PAIR_STATE_SAVED    (0x01 << 1)
+#define PAIR_STATE_REMOVED  (0x01 << 2)
+
+#define PAIR_STATE_CHECK(ps, flag) ((ps & flag) > 0)
+#define PAIR_STATE_SET(ps, flag) (ps |= flag)
+#define PAIR_STATE_UNSET(ps, flag) (ps ^= flag);
+
 typedef struct {
   u64 pair_id;
   str word;
   str translation;
-  bool saved;
-  bool new_pair;
+  u32 pair_state;
   f32 learning_curve;
 } Pair;
 
-Pair *mPairCreate(u64 pair_id, str word, str translation, f32 learning_curve, bool saved, bool new_pair);
-void mPairDestroy(Pair *p);
+Pair *mPairCreate(str word, str translation);
+Pair *mPairLoad(u64 pair_id, str word, str translation, f32 learning_curve);
+void  mPairDestroy(Pair *p);
 
 #endif //MEMORIZE_PAIR_H

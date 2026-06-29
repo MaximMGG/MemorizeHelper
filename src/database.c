@@ -145,5 +145,21 @@ bool dbUpdatePair(str lib_name, u64 pair_id, str word, str translation, f32 lear
 }
 
 bool dbCheckExistsTables() {
-  
+  MDatabaseResult *res = databaseExecQueryWithResult(db, DB_CHECK_LIBS_EXISTS);
+  if (res->rows == 0) {
+    if (!databaseExecQuryWithoutResult(db, DB_CREATE_LIBS_TABLE)) {
+      log(FATAL, "%s: %s", __FUNCTION__, mErrorGetError());
+      return false;
+    }
+  }
+  databaseClearResult(res);
+  res = databaseExecQueryWithResult(db, DB_CHECK_WORDS_EXISTS);
+  if (res->rows == 0) {
+    if (!databaseExecQuryWithoutResult(db, DB_CREATE_WORDS_TABLE)) {
+      log(FATAL, "%s: %s", __FUNCTION__, mErrorGetError());
+      return false;
+    }
+  }
+  databaseClearResult(res);
+  return true;
 }

@@ -7,16 +7,18 @@
 typedef struct {
   str *libraries;
   MLibrary *cur;
-  u32 x, y;
   str user_input;
   bool saved;
 } MWindow;
 
 MWindow *mWindowInit();
-void mWindowDestroy(MWindow *w);
-void mWindowRunMainMenu(MWindow *w);
-void mWindowRunLibsMenu(MWindow *w);
-void mWindowGetUserInput(MWindow *w, str title);
+void     mWindowDestroy           (MWindow *w);
+void     mWindowRunMainMenu       (MWindow *w);
+void     mWindowRunLibsMenu       (MWindow *w);
+void     mWindowRunLibContentMenu (MWindow *w);
+void     mWindowGetUserInput      (MWindow *w, str title);
+str      mWindowAskQuestion       (MWindow *w, str question);
+bool     mWindowAskYesNoQuestion  (MWindow *w, str question);
 
 
 #endif //MEMORIZE_WINDOW_H

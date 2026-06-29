@@ -8,12 +8,12 @@
 #define KEY(k) k
 
 #define ARROW_DOWN 258
-#define ARROW_UP 259
-#define ENTER 10
+#define ARROW_UP   259
+#define ENTER      10
 
 #define REGULAR_COLOR_PAIR 1
-#define CURSOR_COLOR_PAIR 2
-#define MENU_COLOR_PAIR 3
+#define CURSOR_COLOR_PAIR  2
+#define MENU_COLOR_PAIR    3
 
 str main_menu[] = {
   "Create Library",
@@ -35,7 +35,6 @@ str libs_menu[] = {
 
 MWindow *mWindowInit() {
   MWindow *w = make(MWindow);
-  w->x = w->y = 0;
   w->libraries = null;
   w->cur = null;
   w->libraries = dbGetLibrariesList();
@@ -55,10 +54,17 @@ MWindow *mWindowInit() {
 }
 
 void mWindowSave(MWindow *w) {
-  
+  mLibrarySave(w->cur);
+  //TODO(maxim): when config will be add, here need to save config also
 }
 
 void mWindowDestroy(MWindow *w) {
+  if (!w->saved) {
+    if (mWindowAskYesNoQuestion(w, "Do you want to save changes?")) {
+      mWindowSave(w);      
+    }
+  }
+  
   endwin();
   if (w->libraries != null) {
     for(i32 i = 0; i < DA_LEN(w->libraries); i++) {
@@ -172,4 +178,10 @@ void mWindowGetUserInput(MWindow *w, str title) {
     DEALLOC(w->user_input);
   }
   w->user_input = strCopy(in);
+}
+str      mWindowAskQuestion       (MWindow *w, str question) {
+  return null;
+}
+bool     mWindowAskYesNoQuestion  (MWindow *w, str question) {
+  return false;
 }
