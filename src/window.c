@@ -1,5 +1,7 @@
 #include "../headers/window.h"
 #include <string.h>
+#include <pthread.h>
+#include <unistd.h>
 
 #define CTRL(n) (n & 0x1F)
 
@@ -47,7 +49,7 @@ MWindow *mWindowInit() {
   MWindow *w = make(MWindow);
   w->libraries = null;
   w->cur = null;
-  w->libraries = dbGetLibrariesList();
+  //  w->libraries = dbGetLibrariesList();
   w->user_input = null;
   
   initscr();
@@ -91,6 +93,8 @@ void mWindowDestroy(MWindow *w) {
 
 
 void mWindowShutdown(MWindow *w) {
+  endwin();
+  return;
   if (!w->saved) {
     if (mWindowAskYesNoQuestion(w, "Do you want to save changes?")) {
       mWindowSave(w);
@@ -106,9 +110,10 @@ void mWindowRunMainMenu(MWindow *w) {
   attroff(COLOR_PAIR(MENU_COLOR_PAIR));
   u32 cursor_pos = 1;
   i32 ch = 0;
+  mWindowDrawTempMessage("Welcome to the Memorize application!");
 
   while (true) {
-    for (i32 i = 1; i < MAIN_MENU_LEN; i++) {
+    for (i32 i = 1; i <= MAIN_MENU_LEN; i++) {
       if (i == cursor_pos) {
         attron(COLOR_PAIR(CURSOR_COLOR_PAIR));
         mvprintw(i, 0, "> %s", main_menu[i - 1]);
@@ -119,10 +124,12 @@ void mWindowRunMainMenu(MWindow *w) {
         attroff(COLOR_PAIR(REGULAR_COLOR_PAIR));
       }
     }
+    refresh();
     ch = getch();
     switch (ch) {
     case CTRL_Q: {
       mWindowShutdown(w);
+      return;
     } break;
     case CTRL_S: {
       mWindowSave(w);
@@ -235,4 +242,24 @@ void mWindowDrawErrorMessage(MWindow *w, str err_mesage) {
   wborder(err_win, ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ');
   wrefresh(err_win);
   delwin(err_win);
+}
+
+ptr mWindowDrawTempMessageHelper(ptr _message) {
+  str message = cast(str, _message);
+  WINDOW *tmp_win = newwin(LINES * 0.25, COLS * 0.75, LINES / 4, COLS / 4);
+  box(tmp_win, 0, 0);
+  mvwprintw(tmp_win, 1, 1, "%s", message);
+  wrefresh(tmp_win);
+  sleep(3);
+  wborder(tmp_win, ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ');
+  wclear(tmp_win);
+  wrefresh(tmp_win);
+  delwin(tmp_win);
+  return null;
+}
+
+void mWindowDrawTempMessage(str message) {
+  pthread_t tmp;
+  pthread_create(&tmp, null, mWindowDrawTempMessageHelper, message);
+  pthread_detach(tmp);
 }

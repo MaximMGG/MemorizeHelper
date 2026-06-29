@@ -1,6 +1,8 @@
 #include <stdio.h>
+#include "../headers/window.h"
 
 int main() {
-  printf("Hello\n");
+  MWindow *w = mWindowInit();
+  mWindowRunMainMenu(w);
   return 0;
 }

@@ -41,7 +41,10 @@ bool mLibrarySave(MLibrary *lib) {
         }
         PAIR_STATE_SET(lib->content[i]->pair_state, PAIR_STATE_SAVED);
         PAIR_STATE_UNSET(lib->content[i]->pair_state, PAIR_STATE_NEW);
-	lib->content[i]->pair_id = dbGetPairId(lib->name, lib->content[i]->word);
+	if (!dbGetPairId(lib->name, lib->content[i]->word, &lib->content[i]->pair_id)) {
+	  log(ERROR, "MEMORIZE: %s error", __FUNCTION__);
+	  return false;
+	}
       }
 
     } else {

@@ -15,6 +15,6 @@ bool dbDeleteLibrary    (str name);
 str *dbGetLibrariesList ();
 bool dbUpdatePair       (str lib_name, u64 pair_id, str word, str translation, f32 learning_curve);
 bool dbCheckExistsTables();
-u64  dbGetPairId(str lib_name, str word);
+bool dbGetPairId        (str lib_name, str word, u64 *pair_id);
 
 #endif //MEMORIZE_DATABASE_H
