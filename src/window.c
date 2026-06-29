@@ -1,4 +1,5 @@
 #include "../headers/window.h"
+#include <string.h>
 
 #define CTRL(n) (n & 0x1F)
 
@@ -14,6 +15,7 @@
 #define REGULAR_COLOR_PAIR 1
 #define CURSOR_COLOR_PAIR  2
 #define MENU_COLOR_PAIR    3
+#define ERROR_COLOR_PAIR   4
 
 str main_menu[] = {
   "Create Library",
@@ -21,6 +23,14 @@ str main_menu[] = {
   "Select Library",
   "Exit"
 };
+
+typedef enum {
+  CREATE_LIBRARY_I = 1,
+  DELETE_LIBRARY_I,
+  SELECT_LIBRARY_I,
+  EXIT_I,
+} MAIN_MENU_INDEX;
+
 #define MAIN_MENU_LEN 4
 
 str libs_menu[] = {
@@ -48,6 +58,7 @@ MWindow *mWindowInit() {
   init_pair(REGULAR_COLOR_PAIR, COLOR_WHITE, COLOR_BLACK);
   init_pair(CURSOR_COLOR_PAIR, COLOR_BLACK, COLOR_WHITE);
   init_pair(MENU_COLOR_PAIR, COLOR_WHITE, COLOR_BLUE);
+  init_pair(ERROR_COLOR_PAIR, COLOR_WHITE, COLOR_RED);
   refresh();
 
   return w;
@@ -80,6 +91,11 @@ void mWindowDestroy(MWindow *w) {
 
 
 void mWindowShutdown(MWindow *w) {
+  if (!w->saved) {
+    if (mWindowAskYesNoQuestion(w, "Do you want to save changes?")) {
+      mWindowSave(w);
+    }
+  }
   //TODO(maxim) ask if wasn't saved befor last junge
 }
 
@@ -90,21 +106,21 @@ void mWindowRunMainMenu(MWindow *w) {
   attroff(COLOR_PAIR(MENU_COLOR_PAIR));
   u32 cursor_pos = 1;
   i32 ch = 0;
-  
-  while(true) {
-    for(i32 i = 1; i < MAIN_MENU_LEN; i++) {
+
+  while (true) {
+    for (i32 i = 1; i < MAIN_MENU_LEN; i++) {
       if (i == cursor_pos) {
-	attron(COLOR_PAIR(CURSOR_COLOR_PAIR));
-	mvprintw(i, 0, "> %s", main_menu[i - 1]);
-	attroff(COLOR_PAIR(CURSOR_COLOR_PAIR));
+        attron(COLOR_PAIR(CURSOR_COLOR_PAIR));
+        mvprintw(i, 0, "> %s", main_menu[i - 1]);
+        attroff(COLOR_PAIR(CURSOR_COLOR_PAIR));
       } else {
-	attron(COLOR_PAIR(REGULAR_COLOR_PAIR));
-	mvprintw(i, 0, "  %s", main_menu[i - 1]);
-	attroff(COLOR_PAIR(REGULAR_COLOR_PAIR));
+        attron(COLOR_PAIR(REGULAR_COLOR_PAIR));
+        mvprintw(i, 0, "  %s", main_menu[i - 1]);
+        attroff(COLOR_PAIR(REGULAR_COLOR_PAIR));
       }
     }
     ch = getch();
-    switch(ch) {
+    switch (ch) {
     case CTRL_Q: {
       mWindowShutdown(w);
     } break;
@@ -114,33 +130,45 @@ void mWindowRunMainMenu(MWindow *w) {
     case ARROW_DOWN:
     case KEY('j'): {
       if (cursor_pos == MAIN_MENU_LEN) {
-	continue;
+        continue;
       } else {
-	cursor_pos++;
+        cursor_pos++;
       }
     } break;
     case ARROW_UP:
     case KEY('k'): {
       if (cursor_pos == 1) {
-	continue;
-      } else  {
-	cursor_pos--;
+        continue;
+      } else {
+        cursor_pos--;
       }
     } break;
     case ENTER: {
-      switch(cursor_pos) {
-      case 1: 
+      switch (cursor_pos) {
+      case CREATE_LIBRARY_I: {
+	mWindowGetUserInput(w, "Enter library name");
+	if (!mLibraryCreate(w->user_input)) {
+	  
+	}
+      } break;
+      case DELETE_LIBRARY_I: {
+
+      } break;
+      case SELECT_LIBRARY_I: {
+
+      } break;
+      case EXIT_I: {
+
+      } break;
       }
-    } break;
     }
-    
+    }
   }
 }
 
-
-
-
-void mWindowRunLibsMenu(MWindow *w) {}
+void mWindowRunLibsMenu(MWindow *w) {
+  
+}
 
 void mWindowGetUserInput(MWindow *w, str title) {
   WINDOW *input = newwin(3, COLS / 1.5, LINES - (LINES / 8), COLS / 8);
@@ -179,9 +207,32 @@ void mWindowGetUserInput(MWindow *w, str title) {
   }
   w->user_input = strCopy(in);
 }
-str      mWindowAskQuestion       (MWindow *w, str question) {
+str mWindowAskQuestion(MWindow *w, str question) {
   return null;
 }
-bool     mWindowAskYesNoQuestion  (MWindow *w, str question) {
+
+bool mWindowAskYesNoQuestion(MWindow *w, str question) {
+  str q = strConcat(question, " Enter: y\n(yes\no)");
+  mWindowGetUserInput(w, q);
+  DEALLOC(q);
+  if ((streql(w->user_input, "y")) || (streql(w->user_input, "yes")) || (streql(w->user_input, "YES")) || streql(w->user_input, "Y")) {
+    return true;
+  }
+  if ((streql(w->user_input, "n")) || (streql(w->user_input, "no")) || (streql(w->user_input, "NO")) || streql(w->user_input, "N")) {
+    return false;
+  }
   return false;
+}
+
+void mWindowDrawErrorMessage(MWindow *w, str err_mesage) {
+  WINDOW *err_win = newwin(LINES * 0.25, COLS * 0.25, LINES / 2, COLS / 2);
+  box(err_win, 0, 0);
+  attron(COLOR_PAIR(ERROR_COLOR_PAIR));
+  mvwprintw(err_win, 1, 1, "MEMORIZE ERROR: %s\n", err_mesage);
+  attroff(COLOR_PAIR(ERROR_COLOR_PAIR));
+  wrefresh(err_win);
+  i32 ch = wgetch(err_win);
+  wborder(err_win, ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ');
+  wrefresh(err_win);
+  delwin(err_win);
 }
