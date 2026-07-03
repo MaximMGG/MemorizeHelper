@@ -70,8 +70,8 @@ MWindow *mWindowInit() {
   init_pair(MENU_COLOR_PAIR, COLOR_WHITE, COLOR_BLUE);
   init_pair(ERROR_COLOR_PAIR, COLOR_WHITE, COLOR_RED);
 
-  temp_window = newwin(TEMP_WINDOW_HEIGHT, TEMP_WINDOW_WIDTH, 0, COLS - TEMP_WINDOW_WIDTH - 1);
-  //box(temp_window, 0, 0);
+  temp_window = newwin(TEMP_WINDOW_HEIGHT, TEMP_WINDOW_WIDTH, 1, COLS - TEMP_WINDOW_WIDTH - 1);
+  box(temp_window, 0, 0);
   temp_panel = new_panel(temp_window);
   hide_panel(temp_panel);
   update_panels();
@@ -89,12 +89,10 @@ void mWindowSave(MWindow *w) {
 }
 
 void mWindowDestroy(MWindow *w) {
-  if (!w->saved) {
-    if (mWindowAskYesNoQuestion(w, "Do you want to save changes?")) {
-      mWindowSave(w);      
-    }
-  }
-  
+  delwin(temp_window);
+  del_panel(temp_panel);
+  pthread_mutex_destroy(&temp_mutex);
+
   endwin();
   if (w->libraries != null) {
     for(i32 i = 0; i < DA_LEN(w->libraries); i++) {
@@ -251,10 +249,10 @@ bool mWindowAskYesNoQuestion(MWindow *w, str question) {
 
 void mWindowDrawErrorMessage(MWindow *w, str err_message) {
     pthread_mutex_lock(&temp_mutex);
-    attron(COLOR_PAIR(ERROR_COLOR_PAIR));
+    // attron(COLOR_PAIR(ERROR_COLOR_PAIR));
     mvwprintw(temp_window, 1, 1, "%s", err_message);
     wrefresh(temp_window);
-    attroff(COLOR_PAIR(ERROR_COLOR_PAIR));
+    // attroff(COLOR_PAIR(ERROR_COLOR_PAIR));
 
     show_panel(temp_panel);
     update_panels();
@@ -270,11 +268,10 @@ void mWindowDrawErrorMessage(MWindow *w, str err_message) {
 
 ptr mWindowDrawTempMessageHelper(ptr _message) {
   pthread_mutex_lock(&temp_mutex);
-  attron(COLOR_PAIR(REGULAR_COLOR_PAIR));
+  // attron(COLOR_PAIR(REGULAR_COLOR_PAIR));
   mvwprintw(temp_window, 1, 1, "%s", cast(str, _message));
   wrefresh(temp_window);
-  attroff(COLOR_PAIR(REGULAR_COLOR_PAIR));
-
+  // attroff(COLOR_PAIR(REGULAR_COLOR_PAIR));
 
   show_panel(temp_panel);
   update_panels();
