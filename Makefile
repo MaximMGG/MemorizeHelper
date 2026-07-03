@@ -1,7 +1,7 @@
 NAME = memorize
 CC = gcc
 GLAGS = -Wall
-LIBS = -lcext -lpq -lcurses
+LIBS = -lcext -lpq -lcurses -lpanel
 
 SRC_DIR = ./src
 OBJ_DIR = ./obj

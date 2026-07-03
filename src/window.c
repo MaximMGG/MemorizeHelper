@@ -1,7 +1,14 @@
 #include "../headers/window.h"
-#include <string.h>
 #include <pthread.h>
 #include <unistd.h>
+
+
+#define TEMP_WINDOW_WIDTH 40
+#define TEMP_WINDOW_HEIGHT 8
+WINDOW *temp_window;
+PANEL *temp_panel;
+pthread_mutex_t temp_mutex;
+
 
 #define CTRL(n) (n & 0x1F)
 
@@ -231,31 +238,25 @@ bool mWindowAskYesNoQuestion(MWindow *w, str question) {
   return false;
 }
 
-void mWindowDrawErrorMessage(MWindow *w, str err_mesage) {
-  WINDOW *err_win = newwin(LINES * 0.25, COLS * 0.25, LINES / 2, COLS / 2);
-  box(err_win, 0, 0);
-  attron(COLOR_PAIR(ERROR_COLOR_PAIR));
-  mvwprintw(err_win, 1, 1, "MEMORIZE ERROR: %s\n", err_mesage);
-  attroff(COLOR_PAIR(ERROR_COLOR_PAIR));
-  wrefresh(err_win);
-  i32 ch = wgetch(err_win);
-  wborder(err_win, ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ');
-  wrefresh(err_win);
-  delwin(err_win);
-}
+void mWindowDrawErrorMessage(MWindow *w, str err_mesage) {}
 
 ptr mWindowDrawTempMessageHelper(ptr _message) {
-  str message = cast(str, _message);
-  WINDOW *tmp_win = newwin(LINES * 0.25, COLS * 0.75, LINES / 4, COLS / 4);
-  box(tmp_win, 0, 0);
-  mvwprintw(tmp_win, 1, 1, "%s", message);
-  wrefresh(tmp_win);
+  pthread_mutex_lock(&temp_mutex);
+  attron(COLOR_PAIR(REGULAR_COLOR_PAIR));
+  mvwprintw(temp_window, 1, 1, "%s", cast(str, _message));
+  wrefresh(temp_window);
+  attroff(COLOR_PAIR(REGULAR_COLOR_PAIR));
+
+
+  show_panel(temp_panel);
+  update_panels();
+  doupdate();
   sleep(3);
-  wborder(tmp_win, ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ');
-  wclear(tmp_win);
-  wrefresh(tmp_win);
-  delwin(tmp_win);
-  return null;
+  
+  hide_panel(temp_panel);
+  update_panels();
+  doupdate();
+  pthread_mutex_unlock(&temp_mutex);
 }
 
 void mWindowDrawTempMessage(str message) {

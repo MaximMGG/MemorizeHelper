@@ -3,6 +3,7 @@
 #include "library.h"
 #include <cstdext/core.h>
 #include <ncurses.h>
+#include <panel.h>
 
 typedef struct {
   str *libraries;
