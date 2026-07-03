@@ -1,6 +1,7 @@
 #include "../headers/window.h"
 #include <pthread.h>
 #include <unistd.h>
+#include <string.h>
 
 
 #define TEMP_WINDOW_WIDTH 40
@@ -68,6 +69,15 @@ MWindow *mWindowInit() {
   init_pair(CURSOR_COLOR_PAIR, COLOR_BLACK, COLOR_WHITE);
   init_pair(MENU_COLOR_PAIR, COLOR_WHITE, COLOR_BLUE);
   init_pair(ERROR_COLOR_PAIR, COLOR_WHITE, COLOR_RED);
+
+  temp_window = newwin(TEMP_WINDOW_HEIGHT, TEMP_WINDOW_WIDTH, 0, COLS - TEMP_WINDOW_WIDTH - 1);
+  //box(temp_window, 0, 0);
+  temp_panel = new_panel(temp_window);
+  hide_panel(temp_panel);
+  update_panels();
+  doupdate();
+
+  pthread_mutex_init(&temp_mutex, null);
   refresh();
 
   return w;
@@ -107,6 +117,7 @@ void mWindowShutdown(MWindow *w) {
       mWindowSave(w);
     }
   }
+  pthread_mutex_destroy(&temp_mutex);
   //TODO(maxim) ask if wasn't saved befor last junge
 }
 
@@ -238,7 +249,24 @@ bool mWindowAskYesNoQuestion(MWindow *w, str question) {
   return false;
 }
 
-void mWindowDrawErrorMessage(MWindow *w, str err_mesage) {}
+void mWindowDrawErrorMessage(MWindow *w, str err_message) {
+    pthread_mutex_lock(&temp_mutex);
+    attron(COLOR_PAIR(ERROR_COLOR_PAIR));
+    mvwprintw(temp_window, 1, 1, "%s", err_message);
+    wrefresh(temp_window);
+    attroff(COLOR_PAIR(ERROR_COLOR_PAIR));
+
+    show_panel(temp_panel);
+    update_panels();
+    doupdate();
+    sleep(3);
+
+    hide_panel(temp_panel);
+    update_panels();
+    doupdate();
+
+    pthread_mutex_unlock(&temp_mutex);
+}
 
 ptr mWindowDrawTempMessageHelper(ptr _message) {
   pthread_mutex_lock(&temp_mutex);
@@ -257,10 +285,12 @@ ptr mWindowDrawTempMessageHelper(ptr _message) {
   update_panels();
   doupdate();
   pthread_mutex_unlock(&temp_mutex);
+  return null;
 }
 
 void mWindowDrawTempMessage(str message) {
   pthread_t tmp;
+  str smg = strCopy(message);
   pthread_create(&tmp, null, mWindowDrawTempMessageHelper, message);
   pthread_detach(tmp);
 }
