@@ -108,14 +108,13 @@ void mWindowDestroy(MWindow *w) {
 
 
 void mWindowShutdown(MWindow *w) {
-  endwin();
   return;
   if (!w->saved) {
     if (mWindowAskYesNoQuestion(w, "Do you want to save changes?")) {
       mWindowSave(w);
     }
   }
-  pthread_mutex_destroy(&temp_mutex);
+  mWindowDestroy(w);
   //TODO(maxim) ask if wasn't saved befor last junge
 }
 
@@ -127,6 +126,7 @@ void mWindowRunMainMenu(MWindow *w) {
   u32 cursor_pos = 1;
   i32 ch = 0;
   mWindowDrawTempMessage("Welcome to the Memorize application!");
+  usleep(50000);
 
   while (true) {
     for (i32 i = 1; i <= MAIN_MENU_LEN; i++) {
@@ -269,8 +269,10 @@ void mWindowDrawErrorMessage(MWindow *w, str err_message) {
 ptr mWindowDrawTempMessageHelper(ptr _message) {
   pthread_mutex_lock(&temp_mutex);
   // attron(COLOR_PAIR(REGULAR_COLOR_PAIR));
+  //wclear(temp_window);
   mvwprintw(temp_window, 1, 1, "%s", cast(str, _message));
-  refresh();
+  wrefresh(temp_window);
+  
   // attroff(COLOR_PAIR(REGULAR_COLOR_PAIR));
 
   show_panel(temp_panel);
@@ -282,12 +284,13 @@ ptr mWindowDrawTempMessageHelper(ptr _message) {
   update_panels();
   doupdate();
   pthread_mutex_unlock(&temp_mutex);
+  DEALLOC(_message);
   return null;
 }
 
 void mWindowDrawTempMessage(str message) {
   pthread_t tmp;
-  str smg = strCopy(message);
-  pthread_create(&tmp, null, mWindowDrawTempMessageHelper, message);
+  str msg = strCopy(message);
+  pthread_create(&tmp, null, mWindowDrawTempMessageHelper, msg);
   pthread_detach(tmp);
 }

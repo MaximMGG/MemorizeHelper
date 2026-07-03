@@ -116,10 +116,10 @@ int main() {
     DEALLOC(user_name);
   }
   if (user_password) {
-    DEALLOC(user_name);
+    DEALLOC(user_password);
   }
   if (db_name) {
-    DEALLOC(user_name);
+    DEALLOC(db_name);
   }
   dbDisconnect();
   log(INFO, "Shutdown");
