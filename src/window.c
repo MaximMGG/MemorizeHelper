@@ -270,7 +270,7 @@ ptr mWindowDrawTempMessageHelper(ptr _message) {
   pthread_mutex_lock(&temp_mutex);
   // attron(COLOR_PAIR(REGULAR_COLOR_PAIR));
   mvwprintw(temp_window, 1, 1, "%s", cast(str, _message));
-  wrefresh(temp_window);
+  refresh();
   // attroff(COLOR_PAIR(REGULAR_COLOR_PAIR));
 
   show_panel(temp_panel);
