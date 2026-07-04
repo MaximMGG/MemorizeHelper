@@ -2,6 +2,7 @@
 #include <pthread.h>
 #include <unistd.h>
 #include <string.h>
+#include <menu.h>
 
 
 #define TEMP_WINDOW_WIDTH 40
@@ -57,7 +58,7 @@ MWindow *mWindowInit() {
   MWindow *w = make(MWindow);
   w->libraries = null;
   w->cur = null;
-  //  w->libraries = dbGetLibrariesList();
+  w->libraries = dbGetLibrariesList();
   w->user_input = null;
   w->saved = true;
   
@@ -117,6 +118,73 @@ void mWindowShutdown(MWindow *w) {
   mWindowDestroy(w);
 }
 
+void mWindowRunSelectLibrayMenu(MWindow *w) {
+  WINDOW *sel_lib_win = newwin(DA_LEN(w->libraries) + 2, 20, COLS / 4, LINES / 4);
+  PANEL *sel_lib_panel = new_panel(sel_lib_win);
+  MENU *sel_menu;
+  ITEM **items;
+  box(sel_lib_win, 0, 0);
+  wrefresh(sel_lib_win);
+
+  update_panels();
+  doupdate();
+
+  items = ALLOCZERO(sizeof(w->libraries[0]) * (DA_LEN(w->libraries) + 2));
+
+  for(i32 i = 0; i < DA_LEN(w->libraries); i++) {
+    items[i] = new_item(w->libraries[i], null);
+  }
+  items[DA_LEN(w->libraries)] = new_item("Exit", null);
+  items[DA_LEN(w->libraries) + 1] = new_item(null, null);
+  wrefresh(sel_lib_win);
+  sel_menu = new_menu(items);
+  menu_opts_off(sel_menu, O_ONEVALUE);
+  post_menu(sel_menu);
+  refresh();
+  i32 pos = 1;
+  i32 c;
+
+  while((c = getch()) != KEY_BACKSPACE) {
+    switch(c) {
+      case KEY_DOWN:
+        menu_driver(sel_menu, REQ_DOWN_ITEM);
+        if (pos >= DA_LEN(w->libraries) + 1) {
+          pos++;
+        }
+        break;
+      case KEY_UP:
+        menu_driver(sel_menu, REQ_UP_ITEM);
+        if (pos != 1) {
+          pos--;
+        }
+        break;
+      case 10: {
+        const i8 *i_name = item_name(items[pos]);
+        if (w->cur != null) {
+          if (!w->saved) {
+            if (mWindowAskYesNoQuestion(w, "Do you want to save current libray?")) {
+              mLibrarySave(w->cur);
+            } 
+            mLibraryDestroy(w->cur);
+          }
+        }
+        w->cur = mLibraryCreate(cast(str, i_name));
+        mLibraryLoad(w->cur);
+      } break;
+    } 
+  }
+
+EXIT_MENU:
+  unpost_menu(sel_menu);
+  free_menu(sel_menu);
+  for(i32 i = 0; i <= DA_LEN(w->libraries) + 1; i++) {
+    free_item(items[i]);
+  }
+  del_panel(sel_lib_panel);
+  delwin(sel_lib_win);
+}
+
+
 void mWindowRunMainMenu(MWindow *w) {
   clear();
   attron(COLOR_PAIR(MENU_COLOR_PAIR));
@@ -170,12 +238,20 @@ void mWindowRunMainMenu(MWindow *w) {
           case CREATE_LIBRARY_I: {
             mWindowGetUserInput(w, "Enter library name");
             if (!mLibraryCreate(w->user_input)) {
-	      mWindowDrawErrorMessage(w, "Can't create library %s", w->user_input);
+              mWindowDrawErrorMessage("Can't create library %s", w->user_input);
             }
-	    dbCreateLibrary(w->user_input);
+	          dbCreateLibrary(w->user_input);
+            mWindowDrawTempMessage("Library %s created", w->user_input);
           } break;
           case DELETE_LIBRARY_I: {
-
+            mWindowGetUserInput(w, "Enter library name");
+            if (!dbDeleteLibrary(w->user_input)) {
+              mWindowDrawErrorMessage("Can' t delete libray: %s", w->user_input);
+            }
+            if (streql(w->cur->name, w->user_input)) {
+              mLibraryDestroy(w->cur);
+              w->cur = null;
+            }
           } break;
           case SELECT_LIBRARY_I: {
 
@@ -271,7 +347,7 @@ ptr mWindowDrawErrorMessageHelper(ptr msg) {
 }
 
 
-void mWindowDrawErrorMessage(MWindow *w, str err_message, ...) {
+void mWindowDrawErrorMessage(str err_message, ...) {
   pthread_t t;
   va_list li;
   va_start(li, err_message);
@@ -299,14 +375,18 @@ ptr mWindowDrawTempMessageHelper(ptr _message) {
   hide_panel(temp_panel);
   update_panels();
   doupdate();
-  pthread_mutex_unlock(&temp_mutex);
   DEALLOC(_message);
+  pthread_mutex_unlock(&temp_mutex);
   return null;
 }
 
-void mWindowDrawTempMessage(str message) {
+void mWindowDrawTempMessage(str message, ...) {
+  va_list li;
+  va_start(li, message);
+  byte *buf_msg = ALLOC(512);
+  vsprintf(buf_msg, message, li);
   pthread_t tmp;
-  str msg = strCopy(message);
-  pthread_create(&tmp, null, mWindowDrawTempMessageHelper, msg);
+  pthread_create(&tmp, null, mWindowDrawTempMessageHelper, buf_msg);
   pthread_detach(tmp);
+  va_end(li);
 }
