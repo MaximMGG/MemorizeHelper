@@ -59,6 +59,7 @@ MWindow *mWindowInit() {
   w->cur = null;
   //  w->libraries = dbGetLibrariesList();
   w->user_input = null;
+  w->saved = true;
   
   initscr();
   raw();
@@ -85,14 +86,14 @@ MWindow *mWindowInit() {
 
 void mWindowSave(MWindow *w) {
   mLibrarySave(w->cur);
-  //TODO(maxim): when config will be add, here need to save config also
+  w->saved = true;
 }
 
 void mWindowDestroy(MWindow *w) {
-  delwin(temp_window);
   del_panel(temp_panel);
+  delwin(temp_window);
   pthread_mutex_destroy(&temp_mutex);
-
+  echo();
   endwin();
   if (w->libraries != null) {
     for(i32 i = 0; i < DA_LEN(w->libraries); i++) {
@@ -108,14 +109,12 @@ void mWindowDestroy(MWindow *w) {
 
 
 void mWindowShutdown(MWindow *w) {
-  return;
   if (!w->saved) {
     if (mWindowAskYesNoQuestion(w, "Do you want to save changes?")) {
       mWindowSave(w);
     }
   }
   mWindowDestroy(w);
-  //TODO(maxim) ask if wasn't saved befor last junge
 }
 
 void mWindowRunMainMenu(MWindow *w) {
@@ -143,48 +142,49 @@ void mWindowRunMainMenu(MWindow *w) {
     refresh();
     ch = getch();
     switch (ch) {
-    case CTRL_Q: {
-      mWindowShutdown(w);
-      return;
-    } break;
-    case CTRL_S: {
-      mWindowSave(w);
-    } break;
-    case ARROW_DOWN:
-    case KEY('j'): {
-      if (cursor_pos == MAIN_MENU_LEN) {
-        continue;
-      } else {
-        cursor_pos++;
-      }
-    } break;
-    case ARROW_UP:
-    case KEY('k'): {
+      case CTRL_Q: {
+        mWindowShutdown(w);
+        return;
+      } break;
+      case CTRL_S: {
+        mWindowSave(w);
+      } break;
+      case ARROW_DOWN:
+      case KEY('j'): {
+        if (cursor_pos == MAIN_MENU_LEN) {
+          continue;
+        } else {
+          cursor_pos++;
+        }
+      } break;
+      case ARROW_UP:
+      case KEY('k'): {
       if (cursor_pos == 1) {
-        continue;
-      } else {
-        cursor_pos--;
+          continue;
+        } else {
+          cursor_pos--;
+        }
+      } break;
+      case ENTER: {
+        switch (cursor_pos) {
+          case CREATE_LIBRARY_I: {
+            mWindowGetUserInput(w, "Enter library name");
+            if (!mLibraryCreate(w->user_input)) {
+	      mWindowDrawErrorMessage(w, "Can't create library %s", w->user_input);
+            }
+	    dbCreateLibrary(w->user_input);
+          } break;
+          case DELETE_LIBRARY_I: {
+
+          } break;
+          case SELECT_LIBRARY_I: {
+
+          } break;
+          case EXIT_I: {
+
+          } break;
+        }
       }
-    } break;
-    case ENTER: {
-      switch (cursor_pos) {
-      case CREATE_LIBRARY_I: {
-	mWindowGetUserInput(w, "Enter library name");
-	if (!mLibraryCreate(w->user_input)) {
-	  
-	}
-      } break;
-      case DELETE_LIBRARY_I: {
-
-      } break;
-      case SELECT_LIBRARY_I: {
-
-      } break;
-      case EXIT_I: {
-
-      } break;
-      }
-    }
     }
   }
 }
@@ -196,7 +196,8 @@ void mWindowRunLibsMenu(MWindow *w) {
 void mWindowGetUserInput(MWindow *w, str title) {
   WINDOW *input = newwin(3, COLS / 1.5, LINES - (LINES / 8), COLS / 8);
   box(input, 0, 0);
-  mvwprintw(input, 0, (COLS / 1.5) / 2, "%s", title);
+  i32 title_len = strlen(title);
+  mvwprintw(input, 0, (COLS / 2)  - (title_len / 2), "%s", title);
   wrefresh(input);
   wmove(input, 1, 1);
   i32 ch;
@@ -247,23 +248,38 @@ bool mWindowAskYesNoQuestion(MWindow *w, str question) {
   return false;
 }
 
-void mWindowDrawErrorMessage(MWindow *w, str err_message) {
-    pthread_mutex_lock(&temp_mutex);
-    // attron(COLOR_PAIR(ERROR_COLOR_PAIR));
-    mvwprintw(temp_window, 1, 1, "%s", err_message);
-    wrefresh(temp_window);
-    // attroff(COLOR_PAIR(ERROR_COLOR_PAIR));
+ptr mWindowDrawErrorMessageHelper(ptr msg) {
+  pthread_mutex_lock(&temp_mutex);
+  attron(COLOR_PAIR(ERROR_COLOR_PAIR));
 
-    show_panel(temp_panel);
-    update_panels();
-    doupdate();
-    sleep(3);
+  mvwprintw(temp_window, 1, 1, "%s", cast(str, msg));
+  wrefresh(temp_window);
+  attroff(COLOR_PAIR(ERROR_COLOR_PAIR));
 
-    hide_panel(temp_panel);
-    update_panels();
-    doupdate();
+  show_panel(temp_panel);
+  update_panels();
+  doupdate();
+  sleep(3);
 
-    pthread_mutex_unlock(&temp_mutex);
+  hide_panel(temp_panel);
+  update_panels();
+  doupdate();
+
+  DEALLOC(msg);
+  pthread_mutex_unlock(&temp_mutex);
+  return null;
+}
+
+
+void mWindowDrawErrorMessage(MWindow *w, str err_message, ...) {
+  pthread_t t;
+  va_list li;
+  va_start(li, err_message);
+  byte *msg_buf = ALLOC(512);
+  vsprintf(msg_buf, err_message, li);
+  pthread_create(&t, null, mWindowDrawErrorMessageHelper, msg_buf);
+  pthread_detach(t);
+  va_end(li);
 }
 
 ptr mWindowDrawTempMessageHelper(ptr _message) {

@@ -57,7 +57,7 @@ i32 dbGetLibId(str lib_name) {
 bool dbInsertPair(str lib_name, str word, str translation, f32 learning_curve) {
   i32 lib_id = dbGetLibId(lib_name);
   str query = strCreateFmt(DB_INSERT_PAIR_QUERY, lib_id, word, translation, learning_curve);
-  if (!databaseExecQuryWithoutResult(db, query)) {
+  if (!databaseExecQueryWithoutResult(db, query)) {
     log(ERROR, mErrorGetError());
     return false;
   }
@@ -68,7 +68,7 @@ bool dbInsertPair(str lib_name, str word, str translation, f32 learning_curve) {
 bool dbDeletePair(str library_name, str word) {
   i32 lib_id = dbGetLibId(library_name);
   str query = strCreateFmt(DB_DELETE_WORD, word, lib_id);
-  if (!databaseExecQuryWithoutResult(db, query)) {
+  if (!databaseExecQueryWithoutResult(db, query)) {
     log(ERROR, mErrorGetError());
     return false;
   }
@@ -103,7 +103,7 @@ bool dbCreateLibrary(str lib_name) {
   }
   
   str query = strCreateFmt(DB_INSERT_NEW_LIB, lib_name);
-  if (!databaseExecQuryWithoutResult(db, query)) {
+  if (!databaseExecQueryWithoutResult(db, query)) {
     log(ERROR, mErrorGetError());
     return false;
   }
@@ -112,7 +112,7 @@ bool dbCreateLibrary(str lib_name) {
 
 bool dbDeleteLibrary(str name){
   str query = strCreateFmt(DB_DELETE_LIBRARY, name);
-  if (!databaseExecQuryWithoutResult(db, query)) {
+  if (!databaseExecQueryWithoutResult(db, query)) {
     log(ERROR, mErrorGetError());
     return false;
   }
@@ -138,7 +138,7 @@ str *dbGetLibrariesList() {
 bool dbUpdatePair(str lib_name, u64 pair_id, str word, str translation, f32 learning_curve) {
   u32 lib_id = dbGetLibId(lib_name);
   str query = strCreateFmt(DB_UPDATE_PAIR, pair_id, word, translation, learning_curve);
-  if (!databaseExecQuryWithoutResult(db, query)) {
+  if (!databaseExecQueryWithoutResult(db, query)) {
     log(ERROR, mErrorGetError());
     return false;
   }
@@ -148,7 +148,7 @@ bool dbUpdatePair(str lib_name, u64 pair_id, str word, str translation, f32 lear
 bool dbCheckExistsTables() {
   MDatabaseResult *res = databaseExecQueryWithResult(db, DB_CHECK_LIBS_EXISTS);
   if (res->rows == 0) {
-    if (!databaseExecQuryWithoutResult(db, DB_CREATE_LIBS_TABLE)) {
+    if (!databaseExecQueryWithoutResult(db, DB_CREATE_LIBS_TABLE)) {
       log(FATAL, "%s: %s", __FUNCTION__, mErrorGetError());
       return false;
     }
@@ -156,7 +156,7 @@ bool dbCheckExistsTables() {
   databaseClearResult(res);
   res = databaseExecQueryWithResult(db, DB_CHECK_WORDS_EXISTS);
   if (res->rows == 0) {
-    if (!databaseExecQuryWithoutResult(db, DB_CREATE_WORDS_TABLE)) {
+    if (!databaseExecQueryWithoutResult(db, DB_CREATE_WORDS_TABLE)) {
       log(FATAL, "%s: %s", __FUNCTION__, mErrorGetError());
       return false;
     }

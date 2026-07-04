@@ -24,7 +24,7 @@ void checkUserConfig() {
   str _config_dir_path = strCreateFmt(CONFIG_DIR_PATH, user);
   
   if (access(_config_dir_path, F_OK) != 0) {
-    mkdir(CONFIG_DIR_PATH, S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | S_IXGRP);
+    mkdir(_config_dir_path, S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | S_IXGRP);
   }
   if (access(_config_path, F_OK) != 0) {
     i32 fd = open(_config_path, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP);
@@ -110,6 +110,7 @@ int main() {
     mWindowDestroy(w);
     return 1;
   }
+
   log(INFO, "dbCheckExistsTables");
   mWindowRunMainMenu(w);
   if (user_name) {

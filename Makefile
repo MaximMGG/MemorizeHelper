@@ -10,6 +10,7 @@ SRC = $(wildcard $(SRC_DIR)/*.c)
 
 OBJ = $(SRC:*.c=$(OBJ_DIR)/*.o)
 
+
 .PHONY = build clean run
 
 default: build run

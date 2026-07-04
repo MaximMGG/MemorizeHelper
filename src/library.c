@@ -28,6 +28,9 @@ void mLibraryDestroy(MLibrary *lib) {
 }
 
 bool mLibrarySave(MLibrary *lib) {
+  if (lib->saved) {
+    return true;
+  }
   for(i32 i = 0; i < DA_LEN(lib->content); i++) {
     if (PAIR_STATE_CHECK(lib->content[i]->pair_state, PAIR_STATE_NEW)) {
       if (PAIR_STATE_CHECK(lib->content[i]->pair_state, PAIR_STATE_REMOVED)) {
@@ -39,12 +42,13 @@ bool mLibrarySave(MLibrary *lib) {
           log(ERROR, "MEMORIZE: %s error", __FUNCTION__);
           return false;
         }
-        PAIR_STATE_SET(lib->content[i]->pair_state, PAIR_STATE_SAVED);
-        PAIR_STATE_UNSET(lib->content[i]->pair_state, PAIR_STATE_NEW);
+        
 	if (!dbGetPairId(lib->name, lib->content[i]->word, &lib->content[i]->pair_id)) {
 	  log(ERROR, "MEMORIZE: %s error", __FUNCTION__);
 	  return false;
 	}
+	PAIR_STATE_SET(lib->content[i]->pair_state, PAIR_STATE_SAVED);
+        PAIR_STATE_UNSET(lib->content[i]->pair_state, PAIR_STATE_NEW);
       }
 
     } else {
@@ -65,12 +69,14 @@ bool mLibrarySave(MLibrary *lib) {
       }
     }
   }
+  lib->saved = true;
   return true;
 }
 
 bool mLibraryAddPair(MLibrary *lib, str word, str translation) {
   Pair *new_pair = mPairCreate(word, translation);
   daAppend(lib->content, new_pair);
+  lib->saved = false;
   return true;
 }
 
@@ -80,6 +86,7 @@ bool mLibraryRemovePair(MLibrary *lib, str word) {
       PAIR_STATE_SET(lib->content[i]->pair_state, PAIR_STATE_REMOVED);
     }
   }
+  lib->saved = false;
   return true;
 }
 
@@ -89,6 +96,7 @@ bool mLibraryChangeTranslation(MLibrary *lib, u32 pair_index, str new_translatio
   } else {
     DEALLOC(lib->content[pair_index]->translation);
     lib->content[pair_index]->translation = strCopy(new_translation);
+    lib->saved = false;
     return true;
   }
 }
@@ -99,6 +107,7 @@ bool mLibraryChangeWord(MLibrary *lib, u32 pair_index, str new_word) {
   } else {
     DEALLOC(lib->content[pair_index]->word);
     lib->content[pair_index]->word = strCopy(new_word);
+    lib->saved = false;
     return true;
   }
   return false;

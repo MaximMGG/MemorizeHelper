@@ -22,7 +22,7 @@ MDatabase *        databaseConnect    (str user_name, str user_password, str db_
 bool               databaseDisconnect (MDatabase *db);
 bool               databaseInsertQuery(MDatabase *db, str query);
 MDatabaseResult *  databaseExecQueryWithResult(MDatabase *db, str query);
-bool               databaseExecQuryWithoutResult(MDatabase *db, str query);
+bool               databaseExecQueryWithoutResult(MDatabase *db, str query);
 void               databaseClearResult(MDatabaseResult *res);
 
 #endif //MEMORIZE_DB_ENGINE_H

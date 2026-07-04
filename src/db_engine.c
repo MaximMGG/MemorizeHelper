@@ -28,10 +28,10 @@ bool databaseDisconnect(MDatabase *db) {
   DEALLOC(db->user_name);
   DEALLOC(db->user_password);
   DEALLOC(db->db_name);
-  return false;
+  return true;
 }
 
-bool databaseExecQuryWithoutResult(MDatabase *db, str query) {
+bool databaseExecQueryWithoutResult(MDatabase *db, str query) {
   db->res = PQexec(db->conn, query);
   if (PQresultStatus(db->res) != PGRES_COMMAND_OK) {
     PQclear(db->res);
@@ -39,7 +39,7 @@ bool databaseExecQuryWithoutResult(MDatabase *db, str query) {
     return false;
   }
   PQclear(db->res);
-  return false;
+  return true;
 }
 
 MDatabaseResult *databaseExecQueryWithResult(MDatabase *db, str query) {
@@ -62,7 +62,6 @@ MDatabaseResult *databaseExecQueryWithResult(MDatabase *db, str query) {
     }
   }
   PQclear(db->res);
-  
   return result;
 }
 
@@ -75,8 +74,4 @@ void databaseClearResult(MDatabaseResult *res) {
   }
   DEALLOC(res->data);
   DEALLOC(res);
-}
-
-bool databaseUpdateQuery(MDatabase *db, str query) {
-  return false;
 }

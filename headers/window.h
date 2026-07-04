@@ -20,7 +20,7 @@ void     mWindowRunLibContentMenu (MWindow *w);
 void     mWindowGetUserInput      (MWindow *w, str title);
 str      mWindowAskQuestion       (MWindow *w, str question);
 bool     mWindowAskYesNoQuestion  (MWindow *w, str question);
-void     mWindowDrawErrorMessage  (MWindow *w, str err_mesage);
+void     mWindowDrawErrorMessage  (MWindow *w, str err_mesage, ...);
 void     mWindowDrawTempMessage   (str message);
 
 
