@@ -101,10 +101,10 @@ void checkUserConfig() {
 int main() {
   checkUserConfig();
   log(INFO, "Read user config");
-  MWindow *w = mWindowInit();
-  log(INFO, "mWindowInit");
   dbConnect(user_name, user_password, db_name);
   log(INFO, "dbConnect");
+  MWindow *w = mWindowInit();
+  log(INFO, "mWindowInit");
   if (!dbCheckExistsTables()) {
     log(ERROR, "dbCheckExistsTables");
     mWindowDestroy(w);

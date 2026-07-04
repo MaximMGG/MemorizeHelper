@@ -93,6 +93,8 @@ void mWindowSave(MWindow *w) {
 void mWindowDestroy(MWindow *w) {
   del_panel(temp_panel);
   delwin(temp_window);
+  pthread_mutex_lock(&temp_mutex);
+  pthread_mutex_unlock(&temp_mutex);
   pthread_mutex_destroy(&temp_mutex);
   echo();
   endwin();
@@ -159,7 +161,7 @@ void mWindowRunSelectLibrayMenu(MWindow *w) {
         }
         break;
       case 10: {
-        const i8 *i_name = item_name(items[pos]);
+        ITEM *cur = current_item(sel_menu);
         if (w->cur != null) {
           if (!w->saved) {
             if (mWindowAskYesNoQuestion(w, "Do you want to save current libray?")) {
@@ -168,7 +170,7 @@ void mWindowRunSelectLibrayMenu(MWindow *w) {
             mLibraryDestroy(w->cur);
           }
         }
-        w->cur = mLibraryCreate(cast(str, i_name));
+        w->cur = mLibraryCreate(cast(str, item_name(cur)));
         mLibraryLoad(w->cur);
       } break;
     } 
@@ -257,7 +259,7 @@ void mWindowRunMainMenu(MWindow *w) {
 
           } break;
           case EXIT_I: {
-
+            mWindowShutdown(w);
           } break;
         }
       }
