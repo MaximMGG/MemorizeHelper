@@ -3,6 +3,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdarg.h>
+#include <string.h>
 
 #define ERROR_MSG_FMT CCOLOR_OPT(CCODE_OPT_BOLD, CCODE_BR_RED) "MEMORIZE: ERROR -> %s\n" CCODE_RESET
 #define INFO_MSG_FMT CCOLOR_OPT(CCODE_OPT_ITALIC, CCODE_BR_BLUE) "MEMORIZE: INFO -> %s\n" CCODE_RESET

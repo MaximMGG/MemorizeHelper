@@ -187,8 +187,9 @@ void mWindowRunSelectLibrayMenu() {
             mLibraryDestroy(current_lib);
           }
         }
-        current_lib = mLibraryCreate(cast(str, item_name(cur)));
-        mLibraryLoad(current_lib);
+        mLibraryCreate(cast(str, item_name(cur)));
+        //TODO(maxim) change that with new API
+        mLibraryLoad("");
       } break;
     } 
   }

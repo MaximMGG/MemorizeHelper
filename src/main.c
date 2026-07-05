@@ -2,7 +2,7 @@
 #include <cstdext/core.h>
 #include <cstdext/io/logger.h>
 #include <cstdext/io/json.h>
-#include "../headers/window.h"
+#include "../headers/consol.h"
 #include <fcntl.h>
 #include <stdlib.h>
 #include <sys/stat.h>
@@ -103,16 +103,18 @@ int main() {
   log(INFO, "Read user config");
   dbConnect(user_name, user_password, db_name);
   log(INFO, "dbConnect");
+  mConsolInit();
   //mWindowInit();
   log(INFO, "mWindowInit");
   if (!dbCheckExistsTables()) {
     log(ERROR, "dbCheckExistsTables");
-    mWindowDestroy();
+    mConsolDestroy();
     return 1;
   }
 
   log(INFO, "dbCheckExistsTables");
   //mWindowRunMainMenu();
+  mConsolRunMainMenu();
   if (user_name) {
     DEALLOC(user_name);
   }
