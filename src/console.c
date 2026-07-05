@@ -120,6 +120,13 @@ static void mConsolRunLibMenu() {
   printf(CCOLOR_OPT(CCODE_OPT_BOLD, CCODE_GREEN)"%s LIBRARY\n"CCODE_RESET, current_lib->name);
 
   while(true) {
+
+    printf(CCOLOR(CCODE_BLUE)"----------------------------------------------------------\n"CCODE_RESET);
+    for(i32 i = 0; i < DA_LEN(current_lib->content); i++) {
+      printf(CCOLOR_OPT(CCODE_OPT_UNDERLINE, CCODE_DEFAULT)"%d. %s - %s\n"CCODE_RESET, i + 1, current_lib->content[i]->word, current_lib->content[i]->translation);
+    }
+    printf(CCOLOR(CCODE_BLUE)"----------------------------------------------------------\n"CCODE_RESET);
+
     for(i32 i = 0; i < LIB_MENU_LEN; i++) {
       printf("%d - %s\n", i + 1, lib_menu[i]);
     }
@@ -166,12 +173,13 @@ static void mConsolRunLibMenu() {
             mConsolPrintInfo("Library %s saved!", current_lib->name);
           }
         }
+        goto LIB_MENU_EXIT;
         break;
     }
   }
 
 LIB_MENU_EXIT:
-
+  return;
 }
 
 
@@ -288,7 +296,6 @@ str main_menu[] = {
   "Delete Library",
   "Exit"
 };
-
 
 void mConsolRunMainMenu() {
   printf(CCOLOR_OPT(CCODE_OPT_BOLD, CCODE_GREEN)"MAIN MENU\n"CCODE_RESET);

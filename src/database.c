@@ -12,7 +12,7 @@ MDatabase *db = null;
 
 
 
-#define DB_INSERT_PAIR_QUERY     "INSERT INTO words (library_id, word, tranlation, learning_curve) VALUES(%d, '%s', '%s', %f);"
+#define DB_INSERT_PAIR_QUERY     "INSERT INTO words (library_id, word, translation, learning_curve) VALUES(%d, '%s', '%s', %f);"
 #define DB_SELECT_LIB_ID         "SELECT library_id FROM libs where library_name='%s';"
 #define DB_SELECT_LIB_CONTENT    "SELECT pair_id, word, translation, learning_curve FROM words WHERE library_id=%d;"
 #define DB_SELECT_PAIR_ID        "SELECT pair_id FROM words WHERE library_id=%d AND word='%s';"

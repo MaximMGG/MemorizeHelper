@@ -9,7 +9,7 @@
 
 typedef struct {
   str name;
-  Pair **content;
+  DA_ARR(Pair *) content;
   bool saved;
 } MLibrary;
 
