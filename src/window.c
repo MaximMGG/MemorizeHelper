@@ -89,9 +89,9 @@ void mWindowSave() {
 }
 
 void mWindowDestroy() {
+  pthread_mutex_lock(&temp_mutex);
   del_panel(temp_panel);
   delwin(temp_window);
-  pthread_mutex_lock(&temp_mutex);
   pthread_mutex_unlock(&temp_mutex);
   pthread_mutex_destroy(&temp_mutex);
   echo();
@@ -105,17 +105,29 @@ void mWindowDestroy() {
   if (current_lib) {
     mLibraryDestroy(current_lib);
   }
+  if (last_user_input) {
+    DEALLOC(last_user_input);
+  }
 }
 
 
 void mWindowShutdown() {
-  if (!current_lib->saved) {
+  if ((current_lib != null) && !current_lib->saved) {
     if (mWindowAskYesNoQuestion("Do you want to save current library?")) {
       mLibrarySave(current_lib);
     }
   }
 
   mWindowDestroy();
+}
+
+void mWindowReloadLibraries() {
+  for(i32 i = 0; i < DA_LEN(libraries); i++) {
+    DEALLOC(libraries[i]);
+  }
+
+  daDestroy(libraries);
+  libraries = dbGetLibrariesList();
 }
 
 void mWindowRunSelectLibrayMenu() {
@@ -152,16 +164,21 @@ void mWindowRunSelectLibrayMenu() {
   i32 pos = 1;
   i32 c;
 
-  while((c = getch()) != KEY_BACKSPACE) {
+  while((c = wgetch(sel_lib_win)) != KEY_BACKSPACE) {
     switch(c) {
+      case KEY('j'):
       case KEY_DOWN:
         menu_driver(sel_menu, REQ_DOWN_ITEM);
         break;
+      case KEY('k'):
       case KEY_UP:
         menu_driver(sel_menu, REQ_UP_ITEM);
         break;
       case 10: {
         ITEM *cur = current_item(sel_menu);
+        if (streql("Exit", item_name(cur))) {
+          goto EXIT_MENU;
+        }
         if (current_lib != null) {
           if (!current_lib->saved) {
             if (mWindowAskYesNoQuestion("Do you want to save current libray?")) {
@@ -242,8 +259,8 @@ void mWindowRunMainMenu() {
             if (!mLibraryCreate(last_user_input)) {
               mWindowDrawErrorMessage("Can't create library %s", last_user_input);
             }
-	          dbCreateLibrary(last_user_input);
             mWindowDrawTempMessage("Library %s created", last_user_input);
+            mWindowReloadLibraries();
           } break;
           case DELETE_LIBRARY_I: {
             mWindowGetUserInput("Enter library name");
@@ -260,10 +277,12 @@ void mWindowRunMainMenu() {
           } break;
           case EXIT_I: {
             mWindowShutdown();
+            return;
           } break;
         }
       }
     }
+    clear();
   }
 }
 
@@ -283,7 +302,15 @@ void mWindowGetUserInput(str title) {
   i32 len = 0;
   i32 x = 1;
   while((ch = wgetch(input)) != '\n') {
-    if (len == 31) {
+    if (ch == KEY_EXIT) {
+      if (last_user_input != null) {
+        DEALLOC(last_user_input);
+        last_user_input = null;
+      }
+      return;
+      goto USER_INPUT_EXIT;
+    }
+    if (len== 31) {
       continue;
     }
     if (ch == 127) {
@@ -301,13 +328,15 @@ void mWindowGetUserInput(str title) {
     wrefresh(input);
   }
 
-  wborder(input, ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ');
-  wrefresh(input);
-  delwin(input);
   if (last_user_input != null) {
     DEALLOC(last_user_input);
   }
   last_user_input = strCopy(in);
+
+USER_INPUT_EXIT:
+  wborder(input, ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ');
+  wrefresh(input);
+  delwin(input);
 }
 str mWindowAskQuestion(str question) {
   return null;
@@ -362,6 +391,9 @@ void mWindowDrawErrorMessage(str err_message, ...) {
 
 ptr mWindowDrawTempMessageHelper(ptr _message) {
   pthread_mutex_lock(&temp_mutex);
+  // wmove(temp_window, 1, 1);
+  // wclear(temp_window);
+  box(temp_window, 0, 0);
   // attron(COLOR_PAIR(REGULAR_COLOR_PAIR));
   //wclear(temp_window);
   mvwprintw(temp_window, 1, 1, "%s", cast(str, _message));

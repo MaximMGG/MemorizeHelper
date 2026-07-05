@@ -103,16 +103,16 @@ int main() {
   log(INFO, "Read user config");
   dbConnect(user_name, user_password, db_name);
   log(INFO, "dbConnect");
-  MWindow *w = mWindowInit();
+  //mWindowInit();
   log(INFO, "mWindowInit");
   if (!dbCheckExistsTables()) {
     log(ERROR, "dbCheckExistsTables");
-    mWindowDestroy(w);
+    mWindowDestroy();
     return 1;
   }
 
   log(INFO, "dbCheckExistsTables");
-  mWindowRunMainMenu(w);
+  //mWindowRunMainMenu();
   if (user_name) {
     DEALLOC(user_name);
   }

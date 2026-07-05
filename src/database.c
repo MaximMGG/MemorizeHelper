@@ -43,8 +43,9 @@ bool dbDisconnect() {
 i32 dbGetLibId(str lib_name) {
   str query = strCreateFmt(DB_SELECT_LIB_ID, lib_name);
   MDatabaseResult *res = databaseExecQueryWithResult(db, query);
-  if (res->cols < 0) {
+  if (res->rows <= 0) {
     mErrorSetError("MEMORIZE: library %s does not exists\n", lib_name);
+    databaseClearResult(res);
     return -1;
   }
   i32 id = cast(u32 ,atol(res->data[0][0]));
@@ -128,7 +129,7 @@ str *dbGetLibrariesList() {
   }
 
   str *libs = daCreate(str);
-  for(i32 i = 0; res->rows; i++) {
+  for(i32 i = 0; i < res->rows; i++) {
     daAppend(libs, strCopy(res->data[i][0]));
   }
   databaseClearResult(res);
