@@ -105,13 +105,14 @@ void mConsolDestroy() {
   }
 }
 
-#define LIB_MENU_LEN 6    
+#define LIB_MENU_LEN 7    
 str lib_menu[] = {
   "Add pair",
   "Delete pair",
   "Change word",
   "Change translation",
   "Memorize",
+  "Save library",
   "Back to main menu"
 };
 
@@ -123,7 +124,14 @@ static void mConsolRunLibMenu() {
 
     printf(CCOLOR(CCODE_BLUE)"----------------------------------------------------------\n"CCODE_RESET);
     for(i32 i = 0; i < DA_LEN(current_lib->content); i++) {
-      printf(CCOLOR_OPT(CCODE_OPT_UNDERLINE, CCODE_DEFAULT)"%d. %s - %s\n"CCODE_RESET, i + 1, current_lib->content[i]->word, current_lib->content[i]->translation);
+      printf(CCOLOR_OPT(CCODE_OPT_UNDERLINE, CCODE_DEFAULT)"%d. %s - %s"CCODE_RESET, i + 1, current_lib->content[i]->word, current_lib->content[i]->translation);
+      if (mPairIsNew(current_lib->content[i])) {
+        printf(CCOLOR(CCODE_GREEN)" - new\n"CCODE_RESET);
+      } else if (mPairIsDeleted(current_lib->content[i])) {
+        printf(CCOLOR(CCODE_RED)" - deleted\n"CCODE_RESET);
+      } else {
+        printf("\n");
+      }
     }
     printf(CCOLOR(CCODE_BLUE)"----------------------------------------------------------\n"CCODE_RESET);
 
@@ -159,6 +167,23 @@ static void mConsolRunLibMenu() {
         }
         break;
       case '2':
+        mConsolGetUserInput("Enter word or enter word index: ", input, 64);
+        if (input[0] >= '0' && input[0] <= '9') {
+          i32 index = atol(input);
+          if ((index <= 0) || (index >= DA_LEN(current_lib->content))) {
+            mConsolPrintError("Index %d out of librarys indexs range", index);
+            continue;
+          }         
+          mConsolPrintInfo("Going pair %s - %s", current_lib->content[index - 1]->word, current_lib->content[index - 1]->translation);
+          if (!mLibraryRemovePair(current_lib, current_lib->content[index - 1]->word)) {
+            mConsolPrintError("Failed to remove pair %s - %s", current_lib->content[index - 1]->word, current_lib->content[index - 1]->translation);
+          }
+        } else {
+          mConsolPrintInfo("Going word %s", input);
+          if (!mLibraryRemovePair(current_lib, input)) {
+            mConsolPrintError("Failed to remove word %s", input);
+          }
+        }
         break;
       case '3':
         break;
@@ -167,6 +192,10 @@ static void mConsolRunLibMenu() {
       case '5':
         break;
       case '6':
+        mLibrarySave(current_lib);
+        mConsolPrintInfo("Library %s saved!", current_lib->name);
+        break;
+      case '7':
         if (!current_lib->saved) {
           if (mConsolAskYesNo("Do you wont to save library?")) {
             mLibrarySave(current_lib);

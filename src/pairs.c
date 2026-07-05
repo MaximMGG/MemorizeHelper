@@ -37,3 +37,11 @@ void mPairDestroy(Pair *p) {
     DEALLOC(p);
   }
 }
+
+bool  mPairIsNew(Pair *p) {
+  return PAIR_STATE_CHECK(p->pair_state, PAIR_STATE_NEW);
+}
+
+bool  mPairIsDeleted(Pair *p) {
+  return PAIR_STATE_CHECK(p->pair_state, PAIR_STATE_REMOVED);
+}
