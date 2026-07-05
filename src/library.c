@@ -1,19 +1,20 @@
 #include "../headers/library.h"
 #include <cstdext/io/logger.h>
 
-MLibrary *mLibraryCreate     (str lib_name) {
-  MLibrary *lib = make(MLibrary);
-  lib->name = strCopy(lib_name);
-  lib->loaded = false;
-  lib->content = null;
-  lib->saved = true;
-  dbCreateLibrary(lib_name);
-  return lib;
+bool mLibraryCreate(str lib_name) {
+  if (!dbCreateLibrary(lib_name)) {
+    return false;
+  }
+  return true;
 }
 
-bool mLibraryLoad(MLibrary *lib) {
-  lib->content = dbLoadLibrary(lib->name);
-  return true;
+MLibrary *mLibraryLoad(str lib_name) {
+  MLibrary *lib = make(MLibrary);
+  lib->name = strCopy(lib_name);
+  lib->saved = true;
+
+  lib->content = dbLoadLibrary(lib_name);
+  return lib;
 }
 
 void mLibraryDestroy(MLibrary *lib) {
@@ -34,34 +35,34 @@ bool mLibrarySave(MLibrary *lib) {
   for(i32 i = 0; i < DA_LEN(lib->content); i++) {
     if (PAIR_STATE_CHECK(lib->content[i]->pair_state, PAIR_STATE_NEW)) {
       if (PAIR_STATE_CHECK(lib->content[i]->pair_state, PAIR_STATE_REMOVED)) {
-	daRemoveOrdered(lib->content, i);
-	i--;
-	continue;
+        daRemoveOrdered(lib->content, i);
+        i--;
+        continue;
       } else {
         if (!dbInsertPair(lib->name, lib->content[i]->word, lib->content[i]->translation, lib->content[i]->learning_curve)) {
           log(ERROR, "MEMORIZE: %s error", __FUNCTION__);
           return false;
         }
-        
-	if (!dbGetPairId(lib->name, lib->content[i]->word, &lib->content[i]->pair_id)) {
-	  log(ERROR, "MEMORIZE: %s error", __FUNCTION__);
-	  return false;
-	}
-	PAIR_STATE_SET(lib->content[i]->pair_state, PAIR_STATE_SAVED);
+
+        if (!dbGetPairId(lib->name, lib->content[i]->word, &lib->content[i]->pair_id)) {
+          log(ERROR, "MEMORIZE: %s error", __FUNCTION__);
+          return false;
+        }
+        PAIR_STATE_SET(lib->content[i]->pair_state, PAIR_STATE_SAVED);
         PAIR_STATE_UNSET(lib->content[i]->pair_state, PAIR_STATE_NEW);
       }
 
     } else {
       if (PAIR_STATE_CHECK(lib->content[i]->pair_state, PAIR_STATE_REMOVED)) {
-	dbDeletePair(lib->name, lib->content[i]->word);
+        dbDeletePair(lib->name, lib->content[i]->word);
         daRemoveOrdered(lib->content, i);
         i--;
         continue;
       }
       if (!PAIR_STATE_CHECK(lib->content[i]->pair_state, PAIR_STATE_SAVED)) {
         if (!dbUpdatePair(lib->name, lib->content[i]->pair_id,
-                          lib->content[i]->word, lib->content[i]->translation,
-                          lib->content[i]->learning_curve)) {
+              lib->content[i]->word, lib->content[i]->translation,
+              lib->content[i]->learning_curve)) {
           log(ERROR, "MEMORIZE: %s error", __FUNCTION__);
           return false;
         }

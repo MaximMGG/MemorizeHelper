@@ -9,13 +9,12 @@
 
 typedef struct {
   str name;
-  bool loaded;
   Pair **content;
   bool saved;
 } MLibrary;
 
-MLibrary *mLibraryCreate             (str lib_name);
-bool      mLibraryLoad               (MLibrary *lib);
+bool      mLibraryCreate             (str lib_name);
+MLibrary *mLibraryLoad               (str lib_name);
 void      mLibraryDestroy            (MLibrary *lib);
 bool      mLibraryAddPair            (MLibrary *lib, str word, str translation);
 bool      mLibrarySave               (MLibrary *lib);

@@ -10,5 +10,8 @@
 void mConsolInit();
 void mConsolDestroy();
 void mConsolRunMainMenu();
+bool mConsolAskYesNo(str question, ...);
+
+
 
 #endif //MEMORIZE_CONSULE_H
