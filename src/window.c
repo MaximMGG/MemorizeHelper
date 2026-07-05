@@ -5,12 +5,16 @@
 #include <menu.h>
 
 
+MLibrary *current_lib;
+str last_user_input;
+DA_ARR(str) libraries;
+
+
 #define TEMP_WINDOW_WIDTH 40
 #define TEMP_WINDOW_HEIGHT 8
 WINDOW *temp_window;
 PANEL *temp_panel;
 pthread_mutex_t temp_mutex;
-
 
 #define CTRL(n) (n & 0x1F)
 
@@ -54,14 +58,11 @@ str libs_menu[] = {
 #define LIBS_MENU_LEN 5
 
 
-MWindow *mWindowInit() {
-  MWindow *w = make(MWindow);
-  w->libraries = null;
-  w->cur = null;
-  w->libraries = dbGetLibrariesList();
-  w->user_input = null;
-  w->saved = true;
-  
+void mWindowInit() {
+  libraries = dbGetLibrariesList();
+  current_lib = null;
+  last_user_input = null;
+
   initscr();
   raw();
   noecho();
@@ -81,16 +82,13 @@ MWindow *mWindowInit() {
 
   pthread_mutex_init(&temp_mutex, null);
   refresh();
-
-  return w;
 }
 
-void mWindowSave(MWindow *w) {
-  mLibrarySave(w->cur);
-  w->saved = true;
+void mWindowSave() {
+  mLibrarySave(current_lib);
 }
 
-void mWindowDestroy(MWindow *w) {
+void mWindowDestroy() {
   del_panel(temp_panel);
   delwin(temp_window);
   pthread_mutex_lock(&temp_mutex);
@@ -98,30 +96,30 @@ void mWindowDestroy(MWindow *w) {
   pthread_mutex_destroy(&temp_mutex);
   echo();
   endwin();
-  if (w->libraries != null) {
-    for(i32 i = 0; i < DA_LEN(w->libraries); i++) {
-      DEALLOC(w->libraries[i]);
+  if (libraries != null) {
+    for(i32 i = 0; i < DA_LEN(libraries); i++) {
+      DEALLOC(libraries[i]);
     }
-    daDestroy(w->libraries);
+    daDestroy(libraries);
   }
-  if (w->cur != null) {
-    mLibraryDestroy(w->cur);
+  if (current_lib) {
+    mLibraryDestroy(current_lib);
   }
-  DEALLOC(w);
 }
 
 
-void mWindowShutdown(MWindow *w) {
-  if (!w->saved) {
-    if (mWindowAskYesNoQuestion(w, "Do you want to save changes?")) {
-      mWindowSave(w);
+void mWindowShutdown() {
+  if (!current_lib->saved) {
+    if (mWindowAskYesNoQuestion("Do you want to save current library?")) {
+      mLibrarySave(current_lib);
     }
   }
-  mWindowDestroy(w);
+
+  mWindowDestroy();
 }
 
-void mWindowRunSelectLibrayMenu(MWindow *w) {
-  WINDOW *sel_lib_win = newwin(DA_LEN(w->libraries) + 2, 20, COLS / 4, LINES / 4);
+void mWindowRunSelectLibrayMenu() {
+  WINDOW *sel_lib_win = newwin(DA_LEN(libraries) + 2, 20, LINES / 4, COLS / 4);
   PANEL *sel_lib_panel = new_panel(sel_lib_win);
   MENU *sel_menu;
   ITEM **items;
@@ -131,18 +129,26 @@ void mWindowRunSelectLibrayMenu(MWindow *w) {
   update_panels();
   doupdate();
 
-  items = ALLOCZERO(sizeof(w->libraries[0]) * (DA_LEN(w->libraries) + 2));
+  items = ALLOCZERO(sizeof(ITEM *) * (DA_LEN(libraries) + 2));
 
-  for(i32 i = 0; i < DA_LEN(w->libraries); i++) {
-    items[i] = new_item(w->libraries[i], null);
+  for(i32 i = 0; i < DA_LEN(libraries); i++) {
+    items[i] = new_item(libraries[i], null);
   }
-  items[DA_LEN(w->libraries)] = new_item("Exit", null);
-  items[DA_LEN(w->libraries) + 1] = new_item(null, null);
+
+  items[DA_LEN(libraries)] = new_item("Exit", null);
+  items[DA_LEN(libraries) + 1] = new_item(null, null);
   wrefresh(sel_lib_win);
   sel_menu = new_menu(items);
-  menu_opts_off(sel_menu, O_ONEVALUE);
+  //menu_opts_off(sel_menu, O_ONEVALUE);
+
+  set_menu_win(sel_menu, sel_lib_win);
+  set_menu_sub(sel_menu, derwin(sel_lib_win, DA_LEN(libraries), 18, 1, 1));
+  set_menu_format(sel_menu, DA_LEN(libraries), 1);
+  set_menu_mark(sel_menu, "> ");
+  
   post_menu(sel_menu);
-  refresh();
+  wrefresh(sel_lib_win);
+
   i32 pos = 1;
   i32 c;
 
@@ -150,44 +156,38 @@ void mWindowRunSelectLibrayMenu(MWindow *w) {
     switch(c) {
       case KEY_DOWN:
         menu_driver(sel_menu, REQ_DOWN_ITEM);
-        if (pos >= DA_LEN(w->libraries) + 1) {
-          pos++;
-        }
         break;
       case KEY_UP:
         menu_driver(sel_menu, REQ_UP_ITEM);
-        if (pos != 1) {
-          pos--;
-        }
         break;
       case 10: {
         ITEM *cur = current_item(sel_menu);
-        if (w->cur != null) {
-          if (!w->saved) {
-            if (mWindowAskYesNoQuestion(w, "Do you want to save current libray?")) {
-              mLibrarySave(w->cur);
+        if (current_lib != null) {
+          if (!current_lib->saved) {
+            if (mWindowAskYesNoQuestion("Do you want to save current libray?")) {
+              mLibrarySave(current_lib);
             } 
-            mLibraryDestroy(w->cur);
+            mLibraryDestroy(current_lib);
           }
         }
-        w->cur = mLibraryCreate(cast(str, item_name(cur)));
-        mLibraryLoad(w->cur);
+        current_lib = mLibraryCreate(cast(str, item_name(cur)));
+        mLibraryLoad(current_lib);
       } break;
     } 
   }
 
 EXIT_MENU:
   unpost_menu(sel_menu);
-  free_menu(sel_menu);
-  for(i32 i = 0; i <= DA_LEN(w->libraries) + 1; i++) {
+  for(i32 i = 0; i <= DA_LEN(libraries) + 1; i++) {
     free_item(items[i]);
   }
+  free_menu(sel_menu);
   del_panel(sel_lib_panel);
   delwin(sel_lib_win);
 }
 
 
-void mWindowRunMainMenu(MWindow *w) {
+void mWindowRunMainMenu() {
   clear();
   attron(COLOR_PAIR(MENU_COLOR_PAIR));
   mvprintw(0, 0, "%-*s", COLS - 1, "MAIN MENU");
@@ -213,11 +213,11 @@ void mWindowRunMainMenu(MWindow *w) {
     ch = getch();
     switch (ch) {
       case CTRL_Q: {
-        mWindowShutdown(w);
+        mWindowShutdown();
         return;
       } break;
       case CTRL_S: {
-        mWindowSave(w);
+        mWindowSave();
       } break;
       case ARROW_DOWN:
       case KEY('j'): {
@@ -238,28 +238,28 @@ void mWindowRunMainMenu(MWindow *w) {
       case ENTER: {
         switch (cursor_pos) {
           case CREATE_LIBRARY_I: {
-            mWindowGetUserInput(w, "Enter library name");
-            if (!mLibraryCreate(w->user_input)) {
-              mWindowDrawErrorMessage("Can't create library %s", w->user_input);
+            mWindowGetUserInput("Enter library name");
+            if (!mLibraryCreate(last_user_input)) {
+              mWindowDrawErrorMessage("Can't create library %s", last_user_input);
             }
-	          dbCreateLibrary(w->user_input);
-            mWindowDrawTempMessage("Library %s created", w->user_input);
+	          dbCreateLibrary(last_user_input);
+            mWindowDrawTempMessage("Library %s created", last_user_input);
           } break;
           case DELETE_LIBRARY_I: {
-            mWindowGetUserInput(w, "Enter library name");
-            if (!dbDeleteLibrary(w->user_input)) {
-              mWindowDrawErrorMessage("Can' t delete libray: %s", w->user_input);
+            mWindowGetUserInput("Enter library name");
+            if (!dbDeleteLibrary(last_user_input)) {
+              mWindowDrawErrorMessage("Can' t delete libray: %s", last_user_input);
             }
-            if (streql(w->cur->name, w->user_input)) {
-              mLibraryDestroy(w->cur);
-              w->cur = null;
+            if (streql(current_lib->name, last_user_input)) {
+              mLibraryDestroy(current_lib);
+              current_lib = null;
             }
           } break;
           case SELECT_LIBRARY_I: {
-
+            mWindowRunSelectLibrayMenu();
           } break;
           case EXIT_I: {
-            mWindowShutdown(w);
+            mWindowShutdown();
           } break;
         }
       }
@@ -267,11 +267,11 @@ void mWindowRunMainMenu(MWindow *w) {
   }
 }
 
-void mWindowRunLibsMenu(MWindow *w) {
+void mWindowRunLibsMenu() {
   
 }
 
-void mWindowGetUserInput(MWindow *w, str title) {
+void mWindowGetUserInput(str title) {
   WINDOW *input = newwin(3, COLS / 1.5, LINES - (LINES / 8), COLS / 8);
   box(input, 0, 0);
   i32 title_len = strlen(title);
@@ -304,23 +304,23 @@ void mWindowGetUserInput(MWindow *w, str title) {
   wborder(input, ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ');
   wrefresh(input);
   delwin(input);
-  if (w->user_input != null) {
-    DEALLOC(w->user_input);
+  if (last_user_input != null) {
+    DEALLOC(last_user_input);
   }
-  w->user_input = strCopy(in);
+  last_user_input = strCopy(in);
 }
-str mWindowAskQuestion(MWindow *w, str question) {
+str mWindowAskQuestion(str question) {
   return null;
 }
 
-bool mWindowAskYesNoQuestion(MWindow *w, str question) {
+bool mWindowAskYesNoQuestion(str question) {
   str q = strConcat(question, " Enter: y\n(yes\no)");
-  mWindowGetUserInput(w, q);
+  mWindowGetUserInput(q);
   DEALLOC(q);
-  if ((streql(w->user_input, "y")) || (streql(w->user_input, "yes")) || (streql(w->user_input, "YES")) || streql(w->user_input, "Y")) {
+  if ((streql(last_user_input, "y")) || (streql(last_user_input, "yes")) || (streql(last_user_input, "YES")) || streql(last_user_input, "Y")) {
     return true;
   }
-  if ((streql(w->user_input, "n")) || (streql(w->user_input, "no")) || (streql(w->user_input, "NO")) || streql(w->user_input, "N")) {
+  if ((streql(last_user_input, "n")) || (streql(last_user_input, "no")) || (streql(last_user_input, "NO")) || streql(last_user_input, "N")) {
     return false;
   }
   return false;
@@ -392,3 +392,4 @@ void mWindowDrawTempMessage(str message, ...) {
   pthread_detach(tmp);
   va_end(li);
 }
+

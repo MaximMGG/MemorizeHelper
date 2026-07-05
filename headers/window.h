@@ -5,21 +5,14 @@
 #include <ncurses.h>
 #include <panel.h>
 
-typedef struct {
-  str *libraries;
-  MLibrary *cur;
-  str user_input;
-  bool saved;
-} MWindow;
-
-MWindow *mWindowInit();
-void     mWindowDestroy           (MWindow *w);
-void     mWindowRunMainMenu       (MWindow *w);
-void     mWindowRunLibsMenu       (MWindow *w);
-void     mWindowRunLibContentMenu (MWindow *w);
-void     mWindowGetUserInput      (MWindow *w, str title);
-str      mWindowAskQuestion       (MWindow *w, str question);
-bool     mWindowAskYesNoQuestion  (MWindow *w, str question);
+void     mWindowInit();
+void     mWindowDestroy           ();
+void     mWindowRunMainMenu       ();
+void     mWindowRunLibsMenu       ();
+void     mWindowRunLibContentMenu ();
+void     mWindowGetUserInput      (str title);
+str      mWindowAskQuestion       (str question);
+bool     mWindowAskYesNoQuestion  (str question);
 void     mWindowDrawErrorMessage  (str err_mesage, ...);
 void     mWindowDrawTempMessage   (str message, ...);
 
