@@ -115,6 +115,7 @@ int main() {
   log(INFO, "dbCheckExistsTables");
   //mWindowRunMainMenu();
   mConsolRunMainMenu();
+  mConsolDestroy();
   if (user_name) {
     DEALLOC(user_name);
   }

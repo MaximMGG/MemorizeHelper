@@ -42,9 +42,19 @@ void mConsolPrintInfo(str info_msg, ...) {
   va_list li;
   va_start(li, info_msg);
   byte info_buf[512] = {0};
-  sprintf(info_buf, info_msg, li);
+  vsprintf(info_buf, info_msg, li);
   printf(INFO_MSG_FMT, info_buf);
   va_end(li);
+}
+
+void mConsolGetUserInput(str msg, byte *buf, u32 buf_size) {
+  printf("%s", msg);
+  fflush(stdout);
+  i32 read_bytes = read(STDIN_FILENO, buf, buf_size);
+  if (read_bytes <= 0) {
+    mConsolPrintError("read user input error %s %d", __FUNCTION__, __LINE__);
+  }
+  buf[read_bytes - 1] = '\0';
 }
 
 bool mConsolAskYesNo(str question, ...) {
@@ -60,7 +70,7 @@ bool mConsolAskYesNo(str question, ...) {
   if (read_bytes <= 0) {
     mConsolPrintError("Read user input Error");
   }
-  buf[read_bytes] = 0;
+  buf[read_bytes - 1] = 0;
   if (streql(buf, "yes") || 
       streql(buf, "Yes") || 
       streql(buf, "YES") || 
@@ -95,6 +105,7 @@ void mConsolDestroy() {
   }
 }
 
+#define LIB_MENU_LEN 6    
 str lib_menu[] = {
   "Add pair",
   "Delete pair",
@@ -108,6 +119,58 @@ str lib_menu[] = {
 static void mConsolRunLibMenu() {
   printf(CCOLOR_OPT(CCODE_OPT_BOLD, CCODE_GREEN)"%s LIBRARY\n"CCODE_RESET, current_lib->name);
 
+  while(true) {
+    for(i32 i = 0; i < LIB_MENU_LEN; i++) {
+      printf("%d - %s\n", i + 1, lib_menu[i]);
+    }
+    printf("Choose option: ");
+    fflush(stdout);
+
+    byte input[32] = {0};
+    i32 read_bytes = read(STDIN_FILENO, input, 32);
+    if (read_bytes <= 0) {
+      mConsolPrintError("read user input error %s %d", __FUNCTION__, __LINE__);
+      continue;
+    }
+
+  // "Add pair",
+  // "Delete pair",
+  // "Change word",
+  // "Change translation",
+  // "Memorize",
+  // "Back to main menu"
+    byte word[64] = {0};
+    byte translation[128] = {0};
+    switch(input[0]) {
+      case '1':
+        mConsolGetUserInput("Enter word: ", word, 64);
+        mConsolGetUserInput("Enter translation: ", translation, 128);
+        if (mLibraryAddPair(current_lib, word, translation)) {
+          mConsolPrintInfo("Add pair %s - %s", word, translation);
+        } else {
+          mConsolPrintError("Fail to add paid %s - %s", word, translation);
+        }
+        break;
+      case '2':
+        break;
+      case '3':
+        break;
+      case '4':
+        break;
+      case '5':
+        break;
+      case '6':
+        if (!current_lib->saved) {
+          if (mConsolAskYesNo("Do you wont to save library?")) {
+            mLibrarySave(current_lib);
+            mConsolPrintInfo("Library %s saved!", current_lib->name);
+          }
+        }
+        break;
+    }
+  }
+
+LIB_MENU_EXIT:
 
 }
 
@@ -127,7 +190,7 @@ static void mConsolRunSelectLibMenu() {
   if (input[0] == 'b') {
     return;
   }
-  input[read_bytes] = 0;
+  input[read_bytes - 1] = 0;
   i32 index = atol(input);
   if (index > DA_LEN(libraries) || index <= 0) {
     mConsolPrintError("library with index %d do not exist", index);
@@ -152,9 +215,9 @@ static void mConsolCreateLibrary() {
     mConsolPrintError("read user input error %s %d", __FUNCTION__, __LINE__);
     return;
   }
-  input[read_bytes] = 0;
+  input[read_bytes - 1] = '\0';
   if (mLibraryCreate(input)) {
-    daAppend(libraries, input);
+    daAppend(libraries, strCopy(input));
     if (mConsolAskYesNo("Select this library like current working library?")) {
       mConsolSetCurrentLibrary(input);
       mConsolPrintInfo("current working library is %s!", input);
@@ -177,13 +240,24 @@ static void mConsolDeleteLibrary() {
     mConsolPrintError("read user input error %s %d", __FUNCTION__, __LINE__);
     return;
   }
-  input[read_bytes] = 0;
-  if (streql(input, current_lib->name)) {
-    mLibraryDestroy(current_lib);
-    current_lib = null;
+  input[read_bytes - 1] = '\0';
+  if (current_lib) {
+    if (streql(input, current_lib->name)) {
+      if (mConsolAskYesNo("Are you shure, delete library %s?", input)) {
+        dbDeleteLibrary(input);
+      }
+      mLibraryDestroy(current_lib);
+      current_lib = null;
+    }
   }
   if (mConsolAskYesNo("Are you shure, delete library %s?", input)) {
     dbDeleteLibrary(input);
+  }
+  for(i32 i = 0; i < DA_LEN(libraries); i++) {
+    if (streql(input, libraries[i])) {
+      daRemoveOrdered(libraries, i);
+      break;
+    }
   }
   mConsolPrintInfo("library %s deleted!", input);
 }
@@ -243,8 +317,8 @@ void mConsolRunMainMenu() {
         mConsolDeleteLibrary();
         break;
       case '4': //exit
+        return;
         break;
     }
-
   }
 }
