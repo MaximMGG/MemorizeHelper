@@ -153,11 +153,13 @@ static void mConsolRunLibMenu() {
   // "Change word",
   // "Change translation",
   // "Memorize",
+  // "Save library",
   // "Back to main menu"
     byte word[64] = {0};
     byte translation[128] = {0};
+    byte temp_buf[128] = {0};
     switch(input[0]) {
-      case '1':
+      case '1': // Add pair
         mConsolGetUserInput("Enter word: ", word, 64);
         mConsolGetUserInput("Enter translation: ", translation, 128);
         if (mLibraryAddPair(current_lib, word, translation)) {
@@ -166,7 +168,7 @@ static void mConsolRunLibMenu() {
           mConsolPrintError("Fail to add paid %s - %s", word, translation);
         }
         break;
-      case '2':
+      case '2': // Delete Pair
         mConsolGetUserInput("Enter word or enter word index: ", input, 64);
         if (input[0] >= '0' && input[0] <= '9') {
           i32 index = atol(input);
@@ -174,28 +176,66 @@ static void mConsolRunLibMenu() {
             mConsolPrintError("Index %d out of librarys indexs range", index);
             continue;
           }         
-          mConsolPrintInfo("Going pair %s - %s", current_lib->content[index - 1]->word, current_lib->content[index - 1]->translation);
+          mConsolPrintInfo("Going to delete pair %s - %s", current_lib->content[index - 1]->word, current_lib->content[index - 1]->translation);
           if (!mLibraryRemovePair(current_lib, current_lib->content[index - 1]->word)) {
             mConsolPrintError("Failed to remove pair %s - %s", current_lib->content[index - 1]->word, current_lib->content[index - 1]->translation);
           }
         } else {
-          mConsolPrintInfo("Going word %s", input);
+          Pair *p = mLibraryGetPair(current_lib, -1, input);
+          if (!p) {
+            mConsolPrintError("Failed to get pair %s", input);
+            continue;
+          }
+          mConsolPrintInfo("Going delete pair %s - %s", p->word, p->translation);
           if (!mLibraryRemovePair(current_lib, input)) {
-            mConsolPrintError("Failed to remove word %s", input);
+            mConsolPrintError("Failed to remove pair %s - %s", p->word, p->translation);
           }
         }
         break;
-      case '3':
+      case '3': //Change word
+        mConsolGetUserInput("Enter word or enter word index: ", input, 64);
+        if ((input[0] >= '0') && (input[0] <= '9')) {
+          i32 index = atol(input);
+          if ((index <= 0) || (index >= DA_LEN(current_lib->content))) {
+            mConsolPrintError("Index %d out of librarys indexs range", index);
+            continue;
+          }
+          byte new_word[64] = {0};
+          mConsolGetUserInput("Enter new word: ", new_word, 64);
+          Pair *p = mLibraryGetPair(current_lib, index, null);
+          if (!p) {
+            mConsolPrintError("Failed to get pair on index %d", index);
+            continue;
+          }
+          strcpy(temp_buf, p->word);
+          if (!mLibraryChangeWord(current_lib, index - 1, null, new_word)) {
+            mConsolPrintError("Failed to change word %s", p->word);
+          }
+          mConsolPrintInfo("Change word %s to %s", "", temp_buf, new_word);
+        } else {
+          byte new_word[64] = {0};
+          mConsolGetUserInput("Enter new word: ", new_word, 64);
+          Pair *p = mLibraryGetPair(current_lib, -1, input);
+          if (!p) {
+            mConsolPrintError("Failed to get pair %s", input);
+            continue;
+          }
+          strcpy(temp_buf, p->word);
+          if (!mLibraryChangeWord(current_lib, -1, input, new_word)) {
+            mConsolPrintError("Failed to change word %s", input);
+            continue;
+          }
+        }
         break;
-      case '4':
+      case '4': // Change translation
         break;
-      case '5':
+      case '5': // Memorize
         break;
-      case '6':
+      case '6': // Save Library
         mLibrarySave(current_lib);
         mConsolPrintInfo("Library %s saved!", current_lib->name);
         break;
-      case '7':
+      case '7': // Back to main menu
         if (!current_lib->saved) {
           if (mConsolAskYesNo("Do you wont to save library?")) {
             mLibrarySave(current_lib);

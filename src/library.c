@@ -102,14 +102,43 @@ bool mLibraryChangeTranslation(MLibrary *lib, u32 pair_index, str new_translatio
   }
 }
 
-bool mLibraryChangeWord(MLibrary *lib, u32 pair_index, str new_word) {
-  if (streql(lib->content[pair_index]->word, new_word)) {
-    return true;
+bool mLibraryChangeWord(MLibrary *lib, u32 pair_index, str word, str new_word) {
+  if (pair_index != -1) {
+    if (streql(lib->content[pair_index]->word, new_word)) {
+      return true;
+    } else {
+      DEALLOC(lib->content[pair_index]->word);
+      lib->content[pair_index]->word = strCopy(new_word);
+      lib->saved = false;
+      return true;
+    }
   } else {
-    DEALLOC(lib->content[pair_index]->word);
-    lib->content[pair_index]->word = strCopy(new_word);
-    lib->saved = false;
-    return true;
+    for(i32 i = 0; i < DA_LEN(lib->content); i++) {
+      if (streql(word, lib->content[i]->word)) {
+        if (streql(new_word, lib->content[i]->word)) {
+          return true;
+        }
+        DEALLOC(lib->content[i]->word);
+        lib->content[i]->word = strCopy(new_word);
+        lib->saved = false;
+        return true;
+      }
+    }
   }
   return false;
 }
+
+Pair *mLibraryGetPair(MLibrary *lib, i32 word_index, str word) {
+  if (word_index == -1) {
+    for(i32 i = 0; i < DA_LEN(lib->content); i++) {
+      if (streql(word, lib->content[i]->word)) {
+        return lib->content[i];
+      }
+    }
+    return null;
+  } else {
+    return lib->content[word_index];
+  }
+  return null;
+}
+

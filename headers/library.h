@@ -20,6 +20,7 @@ bool      mLibraryAddPair            (MLibrary *lib, str word, str translation);
 bool      mLibrarySave               (MLibrary *lib);
 bool      mLibraryRemovePair         (MLibrary *lib, str word);
 bool      mLibraryChangeTranslation  (MLibrary *lib, u32 word_index, str new_translation);
-bool      mLibraryChangeWord         (MLibrary *lib, u32 word_index, str new_word);
+bool      mLibraryChangeWord         (MLibrary *lib, u32 word_index, str word, str new_word);
+Pair     *mLibraryGetPair            (MLibrary *lib, i32 word_index, str word);
 
 #endif//MEMORIZE_LIBRARY_H
