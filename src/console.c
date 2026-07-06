@@ -202,7 +202,7 @@ static void mConsolRunLibMenu() {
           }
           byte new_word[64] = {0};
           mConsolGetUserInput("Enter new word: ", new_word, 64);
-          Pair *p = mLibraryGetPair(current_lib, index, null);
+          Pair *p = mLibraryGetPair(current_lib, index - 1, null);
           if (!p) {
             mConsolPrintError("Failed to get pair on index %d", index);
             continue;
@@ -211,7 +211,7 @@ static void mConsolRunLibMenu() {
           if (!mLibraryChangeWord(current_lib, index - 1, null, new_word)) {
             mConsolPrintError("Failed to change word %s", p->word);
           }
-          mConsolPrintInfo("Change word %s to %s", "", temp_buf, new_word);
+          mConsolPrintInfo("Change word %s to %s", temp_buf, new_word);
         } else {
           byte new_word[64] = {0};
           mConsolGetUserInput("Enter new word: ", new_word, 64);

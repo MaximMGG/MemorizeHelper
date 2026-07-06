@@ -110,6 +110,7 @@ bool mLibraryChangeWord(MLibrary *lib, u32 pair_index, str word, str new_word) {
       DEALLOC(lib->content[pair_index]->word);
       lib->content[pair_index]->word = strCopy(new_word);
       lib->saved = false;
+      PAIR_STATE_UNSET(lib->content[pair_index]->pair_state, PAIR_STATE_SAVED);
       return true;
     }
   } else {
@@ -121,6 +122,7 @@ bool mLibraryChangeWord(MLibrary *lib, u32 pair_index, str word, str new_word) {
         DEALLOC(lib->content[i]->word);
         lib->content[i]->word = strCopy(new_word);
         lib->saved = false;
+        PAIR_STATE_UNSET(lib->content[i]->pair_state, PAIR_STATE_SAVED);
         return true;
       }
     }
