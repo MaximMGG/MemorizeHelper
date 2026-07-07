@@ -138,7 +138,7 @@ str *dbGetLibrariesList() {
 
 bool dbUpdatePair(str lib_name, u64 pair_id, str word, str translation, f32 learning_curve) {
   u32 lib_id = dbGetLibId(lib_name);
-  str query = strCreateFmt(DB_UPDATE_PAIR, pair_id, word, translation, learning_curve);
+  str query = strCreateFmt(DB_UPDATE_PAIR, word, translation, learning_curve, pair_id);
   if (!databaseExecQueryWithoutResult(db, query)) {
     log(ERROR, mErrorGetError());
     return false;

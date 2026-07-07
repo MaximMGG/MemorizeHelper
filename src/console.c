@@ -196,7 +196,7 @@ static void mConsolRunLibMenu() {
         mConsolGetUserInput("Enter word or enter word index: ", input, 64);
         if ((input[0] >= '0') && (input[0] <= '9')) {
           i32 index = atol(input);
-          if ((index <= 0) || (index >= DA_LEN(current_lib->content))) {
+          if ((index <= 0) || (index > DA_LEN(current_lib->content))) {
             mConsolPrintError("Index %d out of librarys indexs range", index);
             continue;
           }
