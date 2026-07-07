@@ -129,6 +129,8 @@ static void mConsolRunLibMenu() {
         printf(CCOLOR(CCODE_GREEN)" - new\n"CCODE_RESET);
       } else if (mPairIsDeleted(current_lib->content[i])) {
         printf(CCOLOR(CCODE_RED)" - deleted\n"CCODE_RESET);
+      } else if (!mPairIsSave(current_lib->content[i])) {
+        printf(CCOLOR(CCODE_BLUE)" - changed\n"CCODE_RESET);
       } else {
         printf("\n");
       }
@@ -172,7 +174,7 @@ static void mConsolRunLibMenu() {
         mConsolGetUserInput("Enter word or enter word index: ", input, 64);
         if (input[0] >= '0' && input[0] <= '9') {
           i32 index = atol(input);
-          if ((index <= 0) || (index >= DA_LEN(current_lib->content))) {
+          if ((index <= 0) || (index > DA_LEN(current_lib->content))) {
             mConsolPrintError("Index %d out of librarys indexs range", index);
             continue;
           }         
@@ -267,7 +269,7 @@ static void mConsolRunSelectLibMenu() {
   if (input[0] == 'b') {
     return;
   }
-  input[read_bytes - 1] = 0;
+  input[read_bytes - 1] = '\0';
   i32 index = atol(input);
   if (index > DA_LEN(libraries) || index <= 0) {
     mConsolPrintError("library with index %d do not exist", index);

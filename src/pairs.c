@@ -45,3 +45,7 @@ bool  mPairIsNew(Pair *p) {
 bool  mPairIsDeleted(Pair *p) {
   return PAIR_STATE_CHECK(p->pair_state, PAIR_STATE_REMOVED);
 }
+
+bool  mPairIsSave(Pair *p) {
+  return PAIR_STATE_CHECK(p->pair_state, PAIR_STATE_SAVED);
+}

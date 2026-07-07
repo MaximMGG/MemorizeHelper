@@ -23,5 +23,6 @@ Pair *mPairLoad(u64 pair_id, str word, str translation, f32 learning_curve);
 void  mPairDestroy(Pair *p);
 bool  mPairIsNew(Pair *p);
 bool  mPairIsDeleted(Pair *p);
+bool  mPairIsSave(Pair *p);
 
 #endif //MEMORIZE_PAIR_H
