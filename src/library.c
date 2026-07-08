@@ -1,5 +1,6 @@
 #include "../headers/library.h"
 #include <cstdext/io/logger.h>
+#include <cstdext/container/list.h>
 
 bool mLibraryCreate(str lib_name) {
   if (!dbCreateLibrary(lib_name)) {
@@ -91,26 +92,44 @@ bool mLibraryRemovePair(MLibrary *lib, str word) {
   return true;
 }
 
-bool mLibraryChangeTranslation(MLibrary *lib, u32 pair_index, str new_translation) {
-  if (streql(lib->content[pair_index]->translation, new_translation)) {
-    return true;
-  } else {
-    DEALLOC(lib->content[pair_index]->translation);
-    lib->content[pair_index]->translation = strCopy(new_translation);
-    lib->saved = false;
-    return true;
-  }
-}
-
-bool mLibraryChangeWord(MLibrary *lib, u32 pair_index, str word, str new_word) {
-  if (pair_index != -1) {
-    if (streql(lib->content[pair_index]->word, new_word)) {
+bool mLibraryChangeTranslation(MLibrary *lib, u32 word_index, str word, str new_translation) {
+  if (word_index != -1) {
+    if (streql(lib->content[word_index]->translation, new_translation)) {
       return true;
     } else {
-      DEALLOC(lib->content[pair_index]->word);
-      lib->content[pair_index]->word = strCopy(new_word);
+      DEALLOC(lib->content[word_index]->translation);
+      lib->content[word_index]->translation = strCopy(new_translation);
       lib->saved = false;
-      PAIR_STATE_UNSET(lib->content[pair_index]->pair_state, PAIR_STATE_SAVED);
+      PAIR_STATE_UNSET(lib->content[word_index]->pair_state, PAIR_STATE_SAVED);
+      return true;
+    }
+  } else {
+    for(i32 i = 0; i < DA_LEN(lib->content); i++) {
+      if (streql(lib->content[i]->word, word)) {
+        if (streql(lib->content[i]->translation, new_translation)) {
+          continue;
+        } else {
+          DEALLOC(lib->content[i]->translation);
+          lib->content[i]->translation = strCopy(new_translation);
+          lib->saved = false;
+          PAIR_STATE_UNSET(lib->content[i]->pair_state, PAIR_STATE_SAVED);
+          return true;
+        }
+      }
+    }
+  }
+  return false;
+}
+
+bool mLibraryChangeWord(MLibrary *lib, u32 word_index, str word, str new_word) {
+  if (word_index != -1) {
+    if (streql(lib->content[word_index]->word, new_word)) {
+      return true;
+    } else {
+      DEALLOC(lib->content[word_index]->word);
+      lib->content[word_index]->word = strCopy(new_word);
+      lib->saved = false;
+      PAIR_STATE_UNSET(lib->content[word_index]->pair_state, PAIR_STATE_SAVED);
       return true;
     }
   } else {
@@ -144,3 +163,31 @@ Pair *mLibraryGetPair(MLibrary *lib, i32 word_index, str word) {
   return null;
 }
 
+MLibrary *mLibraryCreateFromFile(str lib_name, str file_name, str separator) {
+  List *l = listFromFile(file_name, STR, 0);
+  if (!mLibraryCreate(lib_name)) {
+    listDestroy(l);
+    return null;
+  }
+  MLibrary *lib = mLibraryLoad(lib_name);
+
+  for(i32 i = 0; i < l->len; i++) {
+    str *pair = strSplit(listGet(l, i), separator);
+    if ((strlen(pair[0]) <= 1) || strlen(pair[1]) <= 1) {
+      DEALLOC(pair[0]);
+      DEALLOC(pair[1]);
+      DEALLOC(pair);
+      continue;
+    }
+    if (!pair) {
+      listDestroy(l);
+      return null;
+    }
+    mLibraryAddPair(lib, pair[0], pair[1]);
+    DEALLOC(pair[0]);
+    DEALLOC(pair[1]);
+    DEALLOC(pair);
+  }
+  listDestroy(l);
+  return lib;
+}

@@ -143,8 +143,8 @@ static void mConsolRunLibMenu() {
     printf("Choose option: ");
     fflush(stdout);
 
-    byte input[32] = {0};
-    i32 read_bytes = read(STDIN_FILENO, input, 32);
+    byte input[64] = {0};
+    i32 read_bytes = read(STDIN_FILENO, input, 64);
     if (read_bytes <= 0) {
       mConsolPrintError("read user input error %s %d", __FUNCTION__, __LINE__);
       continue;
@@ -230,6 +230,41 @@ static void mConsolRunLibMenu() {
         }
         break;
       case '4': // Change translation
+        mConsolGetUserInput("Enter word ir index: ", word, 64);
+        if ((word[0] >= '0') || (word[0] <= '9')) {
+          i32 index = atol(word);
+          if ((index <= 0) || (index > DA_LEN(current_lib->content))) {
+            mConsolPrintError("Index %d out of library range", index);
+            continue;
+          }
+          Pair *p = mLibraryGetPair(current_lib, index - 1,  null);
+          if (!p) {
+            mConsolPrintError("Failed to load pair with index %d", index);
+            continue;
+          }
+          mConsolPrintInfo("Going to chagne translation of pair %s - %s", p->word, p->translation);
+          strcpy(temp_buf, p->translation);
+          mConsolGetUserInput("Enter new translation: ", translation, 128);
+          if (!mLibraryChangeTranslation(current_lib, index - 1, null, translation)) {
+            mConsolPrintError("Failed to change translation from %s to %s of word %s", temp_buf, translation, p->word);
+            continue;
+          }
+          mConsolPrintInfo("Change translation of word %s, from %s to %s", p->word, temp_buf, translation);
+        } else {
+          Pair *p = mLibraryGetPair(current_lib, -1, word);
+          if (!p) {
+            mConsolPrintError("Failed to load pair %s", word);
+            continue;
+          }
+          mConsolPrintInfo("Going to chagne translation of pair %s - %s", p->word, p->translation);
+          strcpy(temp_buf, p->translation);
+          mConsolGetUserInput("Enter new translation", translation, 128);
+          if (!mLibraryChangeTranslation(current_lib, -1, word, translation)) {
+            mConsolPrintError("Failed to change translation from %s to %s of word %s", temp_buf, translation, p->word);
+            continue;
+          }
+          mConsolPrintInfo("Change translation of word %s, from %s to %s", word, temp_buf, translation);
+        }
         break;
       case '5': // Memorize
         break;
@@ -285,9 +320,43 @@ static void mConsolRunSelectLibMenu() {
 
 static void mConsolCreateLibrary() {
   printf(CCOLOR_OPT(CCODE_OPT_BOLD, CCODE_GREEN)"CREATE LIBRARY\n"CCODE_RESET);
-  printf("Enter library name: ");
-  fflush(stdout);
+  printf("1. Enter library name: \n");
+  printf("2. Enter library path: \n");
   byte input[128] = {0};
+  mConsolGetUserInput("Choose option: ", input, 128);
+
+  if (input[0] == '0') {
+    mConsolGetUserInput("Enter library name: ", input, 128);
+    if (mLibraryCreate(input)) {
+      daAppend(libraries, strCopy(input));
+      if (mConsolAskYesNo("Select this library like current working library?")) {
+        mConsolSetCurrentLibrary(input);
+        mConsolPrintInfo("current working library is %s!", input);
+        mConsolRunLibMenu();
+      }
+    } else {
+      mConsolPrintError("Library %s already exists", input);
+      return;
+    }
+    mConsolPrintInfo("library %s created!", input);
+  } else {
+    mConsolGetUserInput("Enter path to library: ", input, 128);
+    if (access(input, F_OK) != 0) {
+      mConsolPrintError("Failed to load library on path: %s", input);
+      return;
+    }
+    byte lib_name[64] = {0};
+    mConsolGetUserInput("Enter library name: ", lib_name, 64);
+    byte separator[32] = {0};
+    mConsolGetUserInput("Enter word and translation separator (by default: (\" - \")): ", separator, 32);
+    if (strlen(separator) == 0) {
+      strcpy(separator, " - ");
+    }
+
+    MLibrary *lib_from_file = mLibraryCreateFromFile(lib_name, input, separator);
+  } 
+
+
 
   i32 read_bytes = read(STDIN_FILENO, input, 128);
   if (read_bytes <= 0) {
