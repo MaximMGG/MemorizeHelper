@@ -28,7 +28,6 @@ void mConsolSetCurrentLibrary(str lib_name) {
   current_lib = mLibraryLoad(lib_name);
 }
 
-
 void mConsolPrintError(str error_msg, ...) {
   va_list li;
   va_start(li, error_msg);
@@ -105,6 +104,100 @@ void mConsolDestroy() {
   }
 }
 
+#define MEM_MENU_LEN 6
+str mem_menu[] = {
+  "Cards",
+  "Multiple options",
+  "Type tranlation",
+  "Spelling",
+  "Compilex",
+  "Back to library menu"
+};
+
+
+static void mConsolMemorizeCards() {
+  mConsolPrintInfo("CARDS!");
+  while(true) {
+    bool known_all_word = true;
+    i8 c;
+    for(i32 i = 0; i < DA_LEN(current_lib->content); i++) {
+      if (current_lib->content[i]->learning_curve >= 0.1) {
+        continue;
+      }
+      known_all_word = false;
+
+      printf(CCOLOR(CCODE_BLUE)"%s\n"CCODE_RESET, current_lib->content[i]->word);
+
+      if (read(STDIN_FILENO, &c, 1) != 1) {
+        mConsolPrintError("Error to read user input");
+        return;
+      }
+      printf(CCOLOR(CCODE_GREEN)"%s\n"CCODE_RESET, current_lib->content[i]->translation);
+      printf("Were you corrent? (Enter or n)\n");
+
+      if (read(STDIN_FILENO, &c, 1) == -1) {
+        mConsolPrintError("Failed read user input");
+        break;
+      }
+
+      if (c != 'n') {
+        current_lib->content[i]->learning_curve = 0.1;
+        PAIR_STATE_SET(current_lib->content[i]->pair_state, PAIR_STATE_LEARNING_CURVE);
+      }
+
+      printf("Continue?(Enter or n)\n");
+      if (read(STDIN_FILENO, &c, 1) == -1) {
+        mConsolPrintError("Failed read user input");
+        return;
+      }
+      if (c != 'n') {
+        continue;
+      } else {
+        return;
+      }
+    }
+    if (known_all_word) {
+      mConsolPrintInfo("Seems like you now all tranlations!");
+      return;
+    }
+  }
+}
+
+static void mConsolMemorizeMenu() {
+  
+  while (true) {
+    mConsolPrintInfo("Entered in Memorize menu!");
+    for(i32 i = 0; i < MEM_MENU_LEN; i++) {
+      printf("%d - %s\n", i + 1, mem_menu[i]);
+    }
+    byte input[32] = {0};
+    mConsolGetUserInput("Enter option: ", input, 32);
+    u32 index = atol(input);
+    if (index <= 0 || index > MEM_MENU_LEN) {
+      mConsolPrintError("Index out of menu range");
+      continue;
+    }
+    switch(index) {
+    case 1: // Cards
+      mConsolMemorizeCards();
+      break;
+    case 2: //Multiple options
+      break;
+    case 3: //Type translation
+      break;
+    case 4: //Spelling
+      break;
+    case 5: //Compilex
+      break;
+    case 6: //Return
+      return;
+    }
+  }
+}
+
+
+
+
 #define LIB_MENU_LEN 7    
 str lib_menu[] = {
   "Add pair",
@@ -115,7 +208,6 @@ str lib_menu[] = {
   "Save library",
   "Back to main menu"
 };
-
 
 static void mConsolRunLibMenu() {
   printf(CCOLOR_OPT(CCODE_OPT_BOLD, CCODE_GREEN)"%s LIBRARY\n"CCODE_RESET, current_lib->name);
@@ -267,6 +359,7 @@ static void mConsolRunLibMenu() {
         }
         break;
       case '5': // Memorize
+        mConsolMemorizeMenu();
         break;
       case '6': // Save Library
         mLibrarySave(current_lib);

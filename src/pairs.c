@@ -1,6 +1,5 @@
 #include "../headers/pairs.h"
 
-
 Pair *mPairCreate(str word, str translation) {
   Pair *p = make(Pair);
   *p = (Pair){.pair_id = 0,
@@ -49,3 +48,8 @@ bool  mPairIsDeleted(Pair *p) {
 bool  mPairIsSave(Pair *p) {
   return PAIR_STATE_CHECK(p->pair_state, PAIR_STATE_SAVED);
 }
+
+bool  mPairIsLearningChange(Pair *p) {
+  return PAIR_STATE_CHECK(p->pair_state, PAIR_STATE_LEARNING_CURVE);
+}
+

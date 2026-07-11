@@ -69,8 +69,16 @@ bool mLibrarySave(MLibrary *lib) {
         }
         PAIR_STATE_SET(lib->content[i]->pair_state, PAIR_STATE_SAVED);
       }
+      if (PAIR_STATE_CHECK(lib->content[i]->pair_state, PAIR_STATE_LEARNING_CURVE)) {
+        if (!dbUpdatePair(lib->name, lib->content[i]->pair_id, lib->content[i]->word, lib->content[i]->translation, lib->content[i]->learning_curve)) {
+          log(ERROR, "MEMORIZE: %s error", __FUNCTION__);
+          return false;
+        }
+        PAIR_STATE_UNSET(lib->content[i]->pair_state, PAIR_STATE_LEARNING_CURVE);
+      }
     }
   }
+
   lib->saved = true;
   return true;
 }
